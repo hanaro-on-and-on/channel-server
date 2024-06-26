@@ -1,4 +1,4 @@
-package com.project.hana_on_and_on_channel_server.workplace.domain.enumType;
+package com.project.hana_on_and_on_channel_server.owner.domain.enumType;
 
 import lombok.Getter;
 

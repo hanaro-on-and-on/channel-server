@@ -1,4 +1,4 @@
-package com.project.hana_on_and_on_channel_server.workplace.domain;
+package com.project.hana_on_and_on_channel_server.owner.domain;
 
 import com.project.hana_on_and_on_channel_server.common.domain.BaseEntity;
 import jakarta.persistence.*;

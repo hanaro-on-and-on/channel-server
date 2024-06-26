@@ -1,4 +1,4 @@
-package com.project.hana_on_and_on_channel_server.workplace.repository;
+package com.project.hana_on_and_on_channel_server.owner.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;

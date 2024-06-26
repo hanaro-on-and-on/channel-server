@@ -1,7 +1,6 @@
 package com.project.hana_on_and_on_channel_server.owner.domain;
 
 import com.project.hana_on_and_on_channel_server.common.domain.BaseEntity;
-import com.project.hana_on_and_on_channel_server.workplace.domain.WorkPlace;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

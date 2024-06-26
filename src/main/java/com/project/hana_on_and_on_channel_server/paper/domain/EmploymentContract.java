@@ -1,7 +1,7 @@
 package com.project.hana_on_and_on_channel_server.paper.domain;
 
 import com.project.hana_on_and_on_channel_server.common.domain.BaseEntity;
-import com.project.hana_on_and_on_channel_server.workplace.domain.WorkPlaceEmployee;
+import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -20,7 +20,7 @@ public class EmploymentContract extends BaseEntity {
     private Long employmentContractId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "work_place_employee_id;")
+    @JoinColumn(name = "work_place_employee_id")
     private WorkPlaceEmployee workPlaceEmployee; // 알바생_사업장
 
     @Column(name = "work_start_date")
