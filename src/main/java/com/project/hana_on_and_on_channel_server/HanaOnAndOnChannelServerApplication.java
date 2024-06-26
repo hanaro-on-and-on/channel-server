@@ -8,10 +8,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableJpaAuditing
 @EnableScheduling
-public class HanaPieceApplication {
+public class HanaOnAndOnChannelServerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(HanaPieceApplication.class, args);
+		SpringApplication.run(HanaOnAndOnChannelServerApplication.class, args);
 	}
 
 }
