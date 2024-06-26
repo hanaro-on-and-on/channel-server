@@ -9,7 +9,7 @@ public enum WorkPlaceStatus {
     SUSPENDED("휴업"),
     CLOSED("폐업");
 
-    private String description;
+    private final String description;
 
     WorkPlaceStatus(String description) {
         this.description = description;
