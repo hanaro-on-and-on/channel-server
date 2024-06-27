@@ -35,4 +35,8 @@ public class Owner extends BaseEntity {
         this.ownerNm = ownerNm;
         this.accountNumber = accountNumber;
     }
+
+    public void registerAccountNumber(String accountNumber) {
+        this.accountNumber = accountNumber;
+    }
 }
