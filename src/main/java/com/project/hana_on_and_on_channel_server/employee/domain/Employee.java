@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -28,4 +29,13 @@ public class Employee extends BaseEntity {
 
     @Column(nullable = false, length = 255)
     private String accountNumber;
+
+    public void registerAccountNumber(String accountNumber){this.accountNumber = accountNumber;}
+
+    @Builder
+    public Employee(Long userId, String employeeNm, String accountNumber) {
+        this.userId = userId;
+        this.employeeNm = employeeNm;
+        this.accountNumber = accountNumber;
+    }
 }
