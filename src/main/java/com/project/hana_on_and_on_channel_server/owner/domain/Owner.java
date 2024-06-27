@@ -20,21 +20,19 @@ public class Owner extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long ownerId;
 
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(name = "owner_nm")
-    private String ownerName;
+    private String ownerNm;
 
     @Column(name = "account_number")
     private String accountNumber;
 
-    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
-    private List<WorkPlace> workPlaces = new ArrayList<>();
-
     @Builder
-    private Owner(Long ownerId, String ownerName, String accountNumber) {
-        this.ownerId = ownerId;
-        this.ownerName = ownerName;
+    public Owner(Long userId, String ownerNm, String accountNumber) {
+        this.userId = userId;
+        this.ownerNm = ownerNm;
         this.accountNumber = accountNumber;
     }
-
-
 }
