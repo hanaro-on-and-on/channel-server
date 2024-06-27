@@ -4,6 +4,7 @@ import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
 import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountRegRequest;
 import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountUpsertRequest;
 import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountUpsertResponse;
+import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeDuplicatedException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,11 @@ public class EmployeeService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public EmployeeAccountUpsertResponse registerEmployeeAccount(Long userId, EmployeeAccountRegRequest employeeAccountRegRequest){
+        // employee 존재 여부 확인
+        employeeRepository.findByUserId(userId).ifPresent(employee -> {
+            throw new EmployeeDuplicatedException();
+        });
+
         // employee 등록
         Employee employee = employeeRepository.save(Employee.builder()
                 .userId(userId)
