@@ -2,6 +2,7 @@ package com.project.hana_on_and_on_channel_server.employee.controller;
 
 import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountRegRequest;
 import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountUpsertRequest;
+import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountUpsertResponse;
 import com.project.hana_on_and_on_channel_server.employee.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +17,9 @@ public class EmployeeController {
     private final EmployeeService employeeService;
 
     @PostMapping("/accounts")
-    public ResponseEntity<Void> registerEmployeeAccount(@AuthenticationPrincipal Long userId, @RequestBody EmployeeAccountRegRequest employeeAccountRegRequest){
-        employeeService.registerEmployeeAccount(userId, employeeAccountRegRequest);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<EmployeeAccountUpsertResponse> registerEmployeeAccount(@AuthenticationPrincipal Long userId, @RequestBody EmployeeAccountRegRequest employeeAccountRegRequest){
+        EmployeeAccountUpsertResponse response = employeeService.registerEmployeeAccount(userId, employeeAccountRegRequest);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/accounts")
