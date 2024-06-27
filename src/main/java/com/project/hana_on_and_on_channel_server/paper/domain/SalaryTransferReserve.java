@@ -1,5 +1,6 @@
-package com.project.hana_on_and_on_channel_server.attendance.domain;
+package com.project.hana_on_and_on_channel_server.paper.domain;
 
+import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
 import com.project.hana_on_and_on_channel_server.common.domain.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,18 +15,18 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Entity(name="salary_transfer_history")
+@Entity(name="salary_transfer_reserve")
 @Getter
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
-public class SalaryTransferHistory extends BaseEntity {
+public class SalaryTransferReserve extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long salaryTransferHistoryId;
+    private Long salaryTransferReserveId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "attendance_id")
-    private Attendance attendance;
+    @JoinColumn(name = "pay_stub_id")
+    private PayStub payStub;
 
     @Column(nullable = false)
     private Long basicPay;
@@ -36,11 +37,15 @@ public class SalaryTransferHistory extends BaseEntity {
     @Column(nullable = false)
     private Long tax;
 
+    @Column(nullable = false)
+    private String reserveDate;
+
     @Builder
-    public SalaryTransferHistory(Attendance attendance, Long basicPay, Long overPay, Long tax) {
-        this.attendance = attendance;
+    public SalaryTransferReserve(PayStub payStub, Long basicPay, Long overPay, Long tax, String reserveDate) {
+        this.payStub = payStub;
         this.basicPay = basicPay;
         this.overPay = overPay;
         this.tax = tax;
+        this.reserveDate = reserveDate;
     }
 }

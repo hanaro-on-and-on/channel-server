@@ -30,6 +30,7 @@ dependencies {
 	implementation 'com.google.guava:guava:11.0.2'
 
 	compileOnly 'org.projectlombok:lombok'
+	implementation 'org.hibernate:hibernate-spatial:6.2.5.Final'
 	implementation 'org.postgresql:postgresql'
 	runtimeOnly 'org.postgresql:postgresql'
   	runtimeOnly 'com.h2database:h2'
