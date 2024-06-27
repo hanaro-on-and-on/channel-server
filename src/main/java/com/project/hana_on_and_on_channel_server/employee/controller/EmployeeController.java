@@ -23,8 +23,8 @@ public class EmployeeController {
     }
 
     @PutMapping("/accounts")
-    public ResponseEntity<Void> updateEmployeeAccount(@AuthenticationPrincipal Long userId, @RequestBody EmployeeAccountUpsertRequest employeeAccountUpdateRequest){
-        employeeService.updateEmployeeAccount(userId, employeeAccountUpdateRequest);
+    public ResponseEntity<Void> updateEmployeeAccount(@AuthenticationPrincipal Long userId, @RequestBody EmployeeAccountUpsertRequest employeeAccountUpsertRequest){
+        employeeService.updateEmployeeAccount(userId, employeeAccountUpsertRequest);
         return ResponseEntity.noContent().build();
     }
 }
