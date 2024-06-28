@@ -1,21 +1,45 @@
 package com.project.hana_on_and_on_channel_server.employee.service;
 
 import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
-import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountRegRequest;
-import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountUpsertRequest;
-import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountUpsertResponse;
+import com.project.hana_on_and_on_channel_server.employee.dto.*;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeDuplicatedException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
+import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
+import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
+    private final EmploymentContractsRepository employmentContractsRepository;
+
+    @Transactional(readOnly = true)
+    public WorkPlacesInvitationsListGetResponse getWorkPlacesInvitations(Long userId) {
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // 휴대폰 번호로, 전자서명 안 된 계약서 찾기
+        List<EmploymentContract> employmentContracts = employmentContractsRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
+
+        List<WorkPlacesInvitationsGetResponse> workPlacesInvitationsGetResponseList = employmentContracts.stream()
+                .map(contract -> new WorkPlacesInvitationsGetResponse(
+                        userId,
+                        contract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceName(),
+                        contract.getWorkPlaceEmployee().getWorkPlace().getColorType(),
+                        contract.getWorkPlaceEmployee().getWorkPlace().getOwner().getOwnerNm()))
+                .collect(Collectors.toList());
+
+        return WorkPlacesInvitationsListGetResponse.fromEntity(workPlacesInvitationsGetResponseList);
+    }
+
 
     @Transactional(propagation = Propagation.REQUIRED)
     public EmployeeAccountUpsertResponse registerEmployeeAccount(Long userId, EmployeeAccountRegRequest employeeAccountRegRequest){

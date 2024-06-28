@@ -63,16 +63,16 @@ public class EmploymentContract extends BaseEntity {
     private Long overtimeRate;
 
     @Column(name = "owner_sign")
-    private String ownerSign;
+    private Boolean ownerSign;
 
     @Column(name = "employee_sign")
-    private String employeeSign;
+    private Boolean employeeSign;
 
     @Builder
     public EmploymentContract(WorkPlaceEmployee workPlaceEmployee, LocalDateTime workStartDate, String workSite,
                               String workDetail, Long payPerHour, Long paymentDay, String employeeNm, String employeeAddress,
                               String employeePhone, String restDayOfWeek, Long otherAllowancesAmount, Long bonusAmount,
-                              String otherAllowancesName, Long overtimeRate, String ownerSign) {
+                              String otherAllowancesName, Long overtimeRate, Boolean ownerSign, Boolean employeeSign) {
         this.workPlaceEmployee = workPlaceEmployee;
         this.workStartDate = workStartDate;
         this.workSite = workSite;
@@ -88,5 +88,6 @@ public class EmploymentContract extends BaseEntity {
         this.otherAllowancesName = otherAllowancesName;
         this.overtimeRate = overtimeRate;
         this.ownerSign = ownerSign;
+        this.employeeSign = employeeSign;
     }
 }
