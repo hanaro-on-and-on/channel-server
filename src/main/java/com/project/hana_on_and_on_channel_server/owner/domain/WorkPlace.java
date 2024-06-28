@@ -46,6 +46,7 @@ public class WorkPlace extends BaseEntity {
     private WorkPlaceType workPlaceType;
 
     @Column(name = "color_type_cd")
+    @Enumerated(EnumType.STRING)
     private ColorType colorType;
 
     @ManyToOne
