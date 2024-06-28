@@ -10,6 +10,7 @@ import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepos
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +19,7 @@ public class WorkPlaceService {
     private final WorkPlaceRepository workPlaceRepository;
     private final OwnerRepository ownerRepository;
 
+    @Transactional
     public WorkPlaceUpsertResponse saveWorkPlace(WorkPlaceUpsertRequest dto) {
         Owner owner = ownerRepository.findById(dto.ownerId())
             .orElseThrow(OwnerNotFoundException::new);
