@@ -10,7 +10,6 @@ import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRep
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
-import com.project.hana_on_and_on_channel_server.owner.domain.enumType.ColorType;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
@@ -22,9 +21,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,14 +30,14 @@ public class EmployeeService {
     private final CustomWorkPlaceRepository customWorkPlaceRepository;
 
     @Transactional(readOnly = true)
-    public WorkPlacesInvitationsListGetResponse getWorkPlacesInvitations(Long userId) {
+    public WorkPlacesInvitationListGetResponse getWorkPlacesInvitations(Long userId) {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
         // 휴대폰 번호로, 전자서명 안 된 계약서 찾기
         List<EmploymentContract> employmentContracts = employmentContractsRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
 
-        List<WorkPlacesInvitationsGetResponse> workPlacesInvitationsGetResponseList = employmentContracts.stream()
+        List<WorkPlacesInvitationGetResponse> workPlacesInvitationGetResponseList = employmentContracts.stream()
                 .map(contract -> {
                     WorkPlaceEmployee workPlaceEmployee = contract.getWorkPlaceEmployee();
                     if (workPlaceEmployee == null) {
@@ -55,7 +51,7 @@ public class EmployeeService {
                     if (owner == null) {
                         throw new OwnerNotFoundException();
                     }
-                    return new WorkPlacesInvitationsGetResponse(
+                    return new WorkPlacesInvitationGetResponse(
                             userId,
                             workPlace.getWorkPlaceNm(),
                             workPlace.getColorType(),
@@ -64,7 +60,7 @@ public class EmployeeService {
                 })
                 .toList();
 
-        return WorkPlacesInvitationsListGetResponse.fromEntity(workPlacesInvitationsGetResponseList);
+        return WorkPlacesInvitationListGetResponse.fromEntity(workPlacesInvitationGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
