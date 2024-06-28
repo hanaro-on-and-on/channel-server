@@ -115,11 +115,13 @@ public class EmployeeService {
             );
 
             int payment = attendanceList.stream()
-                    .mapToInt(attendance -> calculateDailyPayment(attendance.getStartTime(), attendance.getEndTime(), attendance.getPayPerHour()))
+                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getPayPerHour()))
                     .sum();
 
             employeeSalaryGetResponseList.add(
                     new EmployeeSalaryGetResponse(
+                            true,
+                            workPlaceEmployee.getWorkPlaceEmployeeId(),
                             workPlaceEmployee.getEmployeeStatus() == EmployeeStatus.QUIT,
                             workPlaceEmployee.getWorkPlace().getWorkPlaceNm(),
                             payment
@@ -141,6 +143,8 @@ public class EmployeeService {
 
             employeeSalaryGetResponseList.add(
                     new EmployeeSalaryGetResponse(
+                            false,
+                            customWorkPlace.getCustomWorkPlaceId(),
                             customWorkPlace.getEmployeeStatus() == EmployeeStatus.QUIT,
                             customWorkPlace.getCustomWorkPlaceNm(),
                             payment
