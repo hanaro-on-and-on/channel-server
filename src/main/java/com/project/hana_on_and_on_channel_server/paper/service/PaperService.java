@@ -4,7 +4,6 @@ import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
-import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.domain.WorkTime;
 import com.project.hana_on_and_on_channel_server.paper.dto.EmployeeAndWorkPlaceEmployeeConnectResponse;
@@ -28,7 +27,6 @@ public class PaperService {
     private final EmploymentContractRepository employmentContractRepository;
     private final WorkTimeRepository workTimeRepository;
     private final EmployeeRepository employeeRepository;
-    private final WorkPlaceEmployeeRepository workPlaceEmployeeRepository;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public List<EmploymentContractListGetResponse> findEmploymentContractList (Long userId){
@@ -41,7 +39,7 @@ public class PaperService {
     public EmploymentContractGetResponse findEmploymentContract(Long employmentContractId){
         EmploymentContract employmentContract = employmentContractRepository.findById(employmentContractId).orElseThrow(EmploymentContractNotFoundException::new);
         List<WorkTime> workTimeList = workTimeRepository.findByEmploymentContractEmploymentContractId(employmentContractId);
-        String workPlaceName = employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceName();
+        String workPlaceName = employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceNm();
 
         return EmploymentContractGetResponse.fromEntity(employmentContract, workTimeList, workPlaceName);
     }
