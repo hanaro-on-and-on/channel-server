@@ -68,6 +68,10 @@ public class EmploymentContract extends BaseEntity {
     @Column(name = "employee_sign")
     private Boolean employeeSign;
 
+    public void registerEmployeeSign(Boolean employeeSign){
+        this.employeeSign=employeeSign;
+    }
+
     @Builder
     public EmploymentContract(WorkPlaceEmployee workPlaceEmployee, LocalDateTime workStartDate, String workSite,
                               String workDetail, Long payPerHour, Long paymentDay, String employeeNm, String employeeAddress,
