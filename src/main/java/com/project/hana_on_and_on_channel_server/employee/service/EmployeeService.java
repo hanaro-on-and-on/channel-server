@@ -115,7 +115,7 @@ public class EmployeeService {
             );
 
             int payment = attendanceList.stream()
-                    .mapToInt(attendance -> calculateDailyPayment(attendance.getAttendanceId()))
+                    .mapToInt(attendance -> calculateDailyPayment(attendance.getStartTime(), attendance.getEndTime(), attendance.getPayPerHour()))
                     .sum();
 
             employeeSalaryGetResponseList.add(
@@ -136,7 +136,7 @@ public class EmployeeService {
             );
 
             int payment = customAttendanceMemoList.stream()
-                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(customAttendanceMemo.getCustomAttendanceMemoId()))
+                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getPayPerHour()))
                     .sum();
 
             employeeSalaryGetResponseList.add(
