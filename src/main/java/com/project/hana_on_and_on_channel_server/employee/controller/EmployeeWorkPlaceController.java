@@ -9,18 +9,18 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/employee")
+@RequestMapping("/api/v1/employee/work-places")
 public class EmployeeWorkPlaceController {
 
     private final EmployeeService employeeService;
 
-    @GetMapping("/work-places/invitations")
+    @GetMapping("/invitations")
     public ResponseEntity<WorkPlacesInvitationsListGetResponse> getWorkPlacesInvitations(@AuthenticationPrincipal Long userId){
         WorkPlacesInvitationsListGetResponse response = employeeService.getWorkPlacesInvitations(userId);
         return ResponseEntity.ok(response);
     }
     
-    @PostMapping("/work-places/custom")
+    @PostMapping("/custom")
     public ResponseEntity<CustomWorkPlacesCreateResponse> createCustomWorkPlaces(@AuthenticationPrincipal Long userId, @RequestBody CustomWorkPlacesCreateRequest customWorkPlacesCreateRequest){
         CustomWorkPlacesCreateResponse response = employeeService.createCustomWorkPlaces(userId, customWorkPlacesCreateRequest);
         return ResponseEntity.ok(response);
