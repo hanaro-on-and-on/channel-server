@@ -15,14 +15,14 @@ public class EmployeeWorkPlaceController {
     private final EmployeeService employeeService;
 
     @GetMapping("/invitation")
-    public ResponseEntity<WorkPlacesInvitationListGetResponse> getWorkPlacesInvitations(@AuthenticationPrincipal Long userId){
-        WorkPlacesInvitationListGetResponse response = employeeService.getWorkPlacesInvitations(userId);
+    public ResponseEntity<EmployeeWorkPlaceInvitationListGetResponse> getWorkPlacesInvitations(@AuthenticationPrincipal Long userId){
+        EmployeeWorkPlaceInvitationListGetResponse response = employeeService.getWorkPlacesInvitations(userId);
         return ResponseEntity.ok(response);
     }
     
     @PostMapping("/custom")
-    public ResponseEntity<CustomWorkPlacesCreateResponse> createCustomWorkPlaces(@AuthenticationPrincipal Long userId, @RequestBody CustomWorkPlacesCreateRequest customWorkPlacesCreateRequest){
-        CustomWorkPlacesCreateResponse response = employeeService.createCustomWorkPlaces(userId, customWorkPlacesCreateRequest);
+    public ResponseEntity<EmployeeWorkPlaceCustomCreateResponse> createCustomWorkPlaces(@AuthenticationPrincipal Long userId, @RequestBody EmployeeWorkPlaceCustomCreateRequest employeeWorkPlaceCustomCreateRequest){
+        EmployeeWorkPlaceCustomCreateResponse response = employeeService.createCustomWorkPlaces(userId, employeeWorkPlaceCustomCreateRequest);
         return ResponseEntity.ok(response);
     }
 }

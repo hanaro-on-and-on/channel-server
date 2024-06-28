@@ -30,14 +30,14 @@ public class EmployeeService {
     private final CustomWorkPlaceRepository customWorkPlaceRepository;
 
     @Transactional(readOnly = true)
-    public WorkPlacesInvitationListGetResponse getWorkPlacesInvitations(Long userId) {
+    public EmployeeWorkPlaceInvitationListGetResponse getWorkPlacesInvitations(Long userId) {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
         // 휴대폰 번호로, 전자서명 안 된 계약서 찾기
         List<EmploymentContract> employmentContracts = employmentContractsRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
 
-        List<WorkPlacesInvitationGetResponse> workPlacesInvitationGetResponseList = employmentContracts.stream()
+        List<EmployeeWorkPlaceInvitationGetResponse> employeeWorkPlaceInvitationGetResponseList = employmentContracts.stream()
                 .map(contract -> {
                     WorkPlaceEmployee workPlaceEmployee = contract.getWorkPlaceEmployee();
                     if (workPlaceEmployee == null) {
@@ -51,7 +51,7 @@ public class EmployeeService {
                     if (owner == null) {
                         throw new OwnerNotFoundException();
                     }
-                    return new WorkPlacesInvitationGetResponse(
+                    return new EmployeeWorkPlaceInvitationGetResponse(
                             userId,
                             workPlace.getWorkPlaceNm(),
                             workPlace.getColorType(),
@@ -60,21 +60,21 @@ public class EmployeeService {
                 })
                 .toList();
 
-        return WorkPlacesInvitationListGetResponse.fromEntity(workPlacesInvitationGetResponseList);
+        return EmployeeWorkPlaceInvitationListGetResponse.fromEntity(employeeWorkPlaceInvitationGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public CustomWorkPlacesCreateResponse createCustomWorkPlaces(Long userId, CustomWorkPlacesCreateRequest customWorkPlacesCreateRequest) {
+    public EmployeeWorkPlaceCustomCreateResponse createCustomWorkPlaces(Long userId, EmployeeWorkPlaceCustomCreateRequest employeeWorkPlaceCustomCreateRequest) {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
         // customWorkPlace 등록
         CustomWorkPlace customWorkPlace = customWorkPlaceRepository.save(CustomWorkPlace.builder()
                         .employee(employee)
-                        .customWorkPlaceNm(customWorkPlacesCreateRequest.customWorkPlaceNm())
-                        .payPerHour(customWorkPlacesCreateRequest.payPerHour())
+                        .customWorkPlaceNm(employeeWorkPlaceCustomCreateRequest.customWorkPlaceNm())
+                        .payPerHour(employeeWorkPlaceCustomCreateRequest.payPerHour())
                 .build());
-        return CustomWorkPlacesCreateResponse.fromEntity(customWorkPlace);
+        return EmployeeWorkPlaceCustomCreateResponse.fromEntity(customWorkPlace);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
