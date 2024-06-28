@@ -21,6 +21,7 @@ public class EmployeeController {
     @GetMapping("/work-places/invitations")
     public ResponseEntity<WorkPlacesInvitationsListGetResponse> getWorkPlacesInvitations(@AuthenticationPrincipal Long userId){
         WorkPlacesInvitationsListGetResponse response = employeeService.getWorkPlacesInvitations(userId);
+        return ResponseEntity.ok(response);
     }
     
     @PostMapping("/custom-work-places")

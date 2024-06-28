@@ -11,6 +11,8 @@ import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.ColorType;
+import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
+import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractsRepository;
@@ -43,7 +45,7 @@ public class EmployeeService {
                 .map(contract -> {
                     WorkPlaceEmployee workPlaceEmployee = contract.getWorkPlaceEmployee();
                     if (workPlaceEmployee == null) {
-                        throw new WorkPlaceNotFoundException();
+                        throw new WorkPlaceEmployeeNotFoundException();
                     }
                     WorkPlace workPlace = workPlaceEmployee.getWorkPlace();
                     if (workPlace == null) {
@@ -51,7 +53,7 @@ public class EmployeeService {
                     }
                     Owner owner = workPlace.getOwner();
                     if (owner == null) {
-                        throw new WorkPlaceNotFoundException();
+                        throw new OwnerNotFoundException();
                     }
                     return new WorkPlacesInvitationsGetResponse(
                             userId,
