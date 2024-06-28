@@ -7,6 +7,11 @@ import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeDupl
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomWorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
+import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
+import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
+import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.ColorType;
+import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractsRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +20,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,12 +40,27 @@ public class EmployeeService {
         List<EmploymentContract> employmentContracts = employmentContractsRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
 
         List<WorkPlacesInvitationsGetResponse> workPlacesInvitationsGetResponseList = employmentContracts.stream()
-                .map(contract -> new WorkPlacesInvitationsGetResponse(
-                        userId,
-                        contract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceName(),
-                        contract.getWorkPlaceEmployee().getWorkPlace().getColorType(),
-                        contract.getWorkPlaceEmployee().getWorkPlace().getOwner().getOwnerNm()))
-                .collect(Collectors.toList());
+                .map(contract -> {
+                    WorkPlaceEmployee workPlaceEmployee = contract.getWorkPlaceEmployee();
+                    if (workPlaceEmployee == null) {
+                        throw new WorkPlaceNotFoundException();
+                    }
+                    WorkPlace workPlace = workPlaceEmployee.getWorkPlace();
+                    if (workPlace == null) {
+                        throw new WorkPlaceNotFoundException();
+                    }
+                    Owner owner = workPlace.getOwner();
+                    if (owner == null) {
+                        throw new WorkPlaceNotFoundException();
+                    }
+                    return new WorkPlacesInvitationsGetResponse(
+                            userId,
+                            workPlace.getWorkPlaceNm(),
+                            workPlace.getColorType(),
+                            owner.getOwnerNm()
+                    );
+                })
+                .toList();
 
         return WorkPlacesInvitationsListGetResponse.fromEntity(workPlacesInvitationsGetResponseList);
     }
