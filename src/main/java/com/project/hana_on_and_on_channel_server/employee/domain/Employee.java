@@ -30,6 +30,9 @@ public class Employee extends BaseEntity {
     @Column(nullable = false, length = 255)
     private String accountNumber;
 
+    @Column(nullable = false)
+    private String phoneNumber;
+
     public void registerAccountNumber(String accountNumber){this.accountNumber = accountNumber;}
 
     @Builder

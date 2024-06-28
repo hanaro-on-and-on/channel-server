@@ -9,6 +9,6 @@ public class WorkPlaceEmployeeNotFoundException extends EntityNotFoundException 
     }
 
     public WorkPlaceEmployeeNotFoundException(Long id) {
-        super("Could not found WorkPlaceEmployee"+id);
+        super("Could not found WorkPlace-Employee"+id);
     }
 }

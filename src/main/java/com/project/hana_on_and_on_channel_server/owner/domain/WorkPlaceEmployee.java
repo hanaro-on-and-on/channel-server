@@ -34,4 +34,8 @@ public class WorkPlaceEmployee extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
     private Employee employee;
+
+    public void registerEmployee(Employee employee){
+        this.employee=employee;
+    }
 }
