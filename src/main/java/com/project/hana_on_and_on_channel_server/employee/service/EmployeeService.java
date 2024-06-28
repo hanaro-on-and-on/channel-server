@@ -1,9 +1,11 @@
 package com.project.hana_on_and_on_channel_server.employee.service;
 
+import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
 import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
 import com.project.hana_on_and_on_channel_server.employee.dto.*;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeDuplicatedException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
+import com.project.hana_on_and_on_channel_server.employee.repository.CustomWorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractsRepository;
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final EmploymentContractsRepository employmentContractsRepository;
+    private final CustomWorkPlaceRepository customWorkPlaceRepository;
 
     @Transactional(readOnly = true)
     public WorkPlacesInvitationsListGetResponse getWorkPlacesInvitations(Long userId) {
@@ -40,6 +43,19 @@ public class EmployeeService {
         return WorkPlacesInvitationsListGetResponse.fromEntity(workPlacesInvitationsGetResponseList);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
+    public CustomWorkPlacesCreateResponse createCustomWorkPlaces(Long userId, CustomWorkPlacesCreateRequest customWorkPlacesCreateRequest) {
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // customWorkPlace 등록
+        CustomWorkPlace customWorkPlace = customWorkPlaceRepository.save(CustomWorkPlace.builder()
+                        .employee(employee)
+                        .customWorkPlaceNm(customWorkPlacesCreateRequest.customWorkPlaceNm())
+                        .payPerHour(customWorkPlacesCreateRequest.payPerHour())
+                .build());
+        return CustomWorkPlacesCreateResponse.fromEntity(customWorkPlace);
+    }
 
     @Transactional(propagation = Propagation.REQUIRED)
     public EmployeeAccountUpsertResponse registerEmployeeAccount(Long userId, EmployeeAccountRegRequest employeeAccountRegRequest){
