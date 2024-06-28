@@ -1,8 +1,6 @@
 package com.project.hana_on_and_on_channel_server.employee.controller;
 
-import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountRegRequest;
-import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountUpsertRequest;
-import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountUpsertResponse;
+import com.project.hana_on_and_on_channel_server.employee.dto.*;
 import com.project.hana_on_and_on_channel_server.employee.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +13,12 @@ import org.springframework.web.bind.annotation.*;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
+
+    @PostMapping("/custom-work-places")
+    public ResponseEntity<CustomWorkPlacesCreateResponse> createCustomWorkPlaces(@AuthenticationPrincipal Long userId, @RequestBody CustomWorkPlacesCreateRequest customWorkPlacesCreateRequest){
+        CustomWorkPlacesCreateResponse response = employeeService.createCustomWorkPlaces(userId, customWorkPlacesCreateRequest);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/accounts")
     public ResponseEntity<EmployeeAccountUpsertResponse> registerEmployeeAccount(@AuthenticationPrincipal Long userId, @RequestBody EmployeeAccountRegRequest employeeAccountRegRequest){
