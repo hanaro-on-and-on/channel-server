@@ -99,7 +99,7 @@ public class OwnerService {
             );
 
             int payment = attendanceList.stream()
-                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getPayPerHour()))
+                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour()))
                     .sum();
 
             ownerSalaryGetResponseList.add(

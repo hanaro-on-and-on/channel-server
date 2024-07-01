@@ -44,6 +44,7 @@ public class Attendance extends BaseEntity {
     private LocalDateTime realStartTime;
     private LocalDateTime realEndTime;
 
+    @Column(nullable = false)
     private Integer restMinute;
 
     public void checkIn(LocalDateTime realStartTime) {

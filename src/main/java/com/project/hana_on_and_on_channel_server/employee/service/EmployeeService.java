@@ -116,7 +116,7 @@ public class EmployeeService {
             );
 
             int payment = attendanceList.stream()
-                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getPayPerHour()))
+                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour()))
                     .sum();
 
             employeeSalaryGetResponseList.add(
@@ -140,7 +140,7 @@ public class EmployeeService {
             );
 
             int payment = customAttendanceMemoList.stream()
-                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getPayPerHour()))
+                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getRestMinute(), customAttendanceMemo.getPayPerHour()))
                     .sum();
 
             employeeSalaryGetResponseList.add(
@@ -174,10 +174,8 @@ public class EmployeeService {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         String yesterDate = String.format("%04d%02d%02d", yesterday.getYear(), yesterday.getMonthValue(), yesterday.getDayOfMonth());
 
-
         // attendance + CustomAttendanceMemo
         List<EmployeeSalaryCalendarGetResponse> employeeSalaryCalendarGetResponseList = new ArrayList<>();
-
         Integer connectedCurrentPayment = 0;
         Integer connectedTotalPayment = 0;
         Integer notConnectedCurrentPayment = 0;
@@ -193,7 +191,7 @@ public class EmployeeService {
 
             for (Attendance attendance : attendanceList) {
                 AttendanceType attendanceType = attendance.getAttendanceType();
-                int payment = calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getPayPerHour());
+                int payment = calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour());
                 if (attendance.getAttendDate().compareTo(yesterDate) <= 0) {    // 1일~어제 까지
                     connectedCurrentPayment += payment;
                 }
@@ -224,7 +222,7 @@ public class EmployeeService {
             );
 
             for (CustomAttendanceMemo customAttendanceMemo : customAttendanceMemoList) {
-                int payment = calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getPayPerHour());
+                int payment = calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getRestMinute(), customAttendanceMemo.getPayPerHour());
                 if (customAttendanceMemo.getAttendDate().compareTo(yesterDate) <= 0) {    // 1일~어제 까지
                     notConnectedCurrentPayment += payment;
                 }
@@ -245,11 +243,6 @@ public class EmployeeService {
                 );
             }
         }
-
-        // totalPayment 계산
-        Integer totalPayment = employeeSalaryCalendarGetResponseList.stream()
-                .mapToInt(EmployeeSalaryCalendarGetResponse::payment)
-                .sum();
 
         return EmployeeSalaryCalendarListGetResponse.fromEntity(
                 connectedCurrentPayment + notConnectedCurrentPayment,
