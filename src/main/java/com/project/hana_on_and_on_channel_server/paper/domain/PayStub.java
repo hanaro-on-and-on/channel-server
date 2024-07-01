@@ -72,8 +72,7 @@ public class PayStub {
 
     @Builder
     public PayStub(WorkPlaceEmployee workPlaceEmployee, Long payPerHour,
-        Long basicHour,
-        Long overHour, String employeeSign, Long weeklyHolidayTime, BigDecimal tax) {
+        Long basicHour, Long overHour, Long weeklyHolidayTime, BigDecimal tax) {
         this.workPlaceEmployee = workPlaceEmployee;
         this.status = PayStubStatus.READY;
         this.payPerHour = payPerHour;

@@ -15,6 +15,7 @@ import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmploy
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.domain.PayStub;
+import com.project.hana_on_and_on_channel_server.paper.domain.TotalHours;
 import com.project.hana_on_and_on_channel_server.paper.domain.WorkTime;
 import com.project.hana_on_and_on_channel_server.paper.domain.enumType.PayStubStatus;
 import com.project.hana_on_and_on_channel_server.paper.dto.*;
@@ -31,9 +32,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -106,41 +109,23 @@ public class PaperService {
             );
 
             //기본 시간, 연장 시간
-            int totalBasicHours = 0;
-            int totalOverHours = 0;
+            TotalHours totalHours = calcTotalHours(attendanceList);
 
-            for (Attendance attendance : attendanceList) {
-                Duration duration = Duration.between(attendance.getRealStartTime(), attendance.getRealEndTime());
-
-                long minutes = duration.toMinutes();
-                double hours = minutes / 60.0;
-
-                int basicHour = (int) Math.min(hours, 8);
-                int overHour = (int) Math.max(hours - 8, 0);
-
-                totalBasicHours += basicHour;
-                totalOverHours += overHour;
-            }
-
-            //주휴 시간 => 총 기본 시간 /4가 15넘으면 기본 시간*4
-            // TODO 주휴 계산 정확하게
-            int totalWeeklyHolidayHours = totalBasicHours / 4 >= 15 ? 7 : 0;
-
-            double totalPay = totalBasicHours * payPerHour + totalOverHours * payPerHour * 1.5 + totalWeeklyHolidayHours * payPerHour;
-            double totalTaxPay = Math.floor(totalPay * 0.094);
+            Long totalPay = totalHours.calcTotalPay(payPerHour);
+            Long totalTaxPay = (long)Math.floor(totalPay * 0.094);
 
             return MonthlyPayStubGetResponse.builder()
                     .payStubId(null)
                     .workPlaceEmployeeId(workPlaceEmployeeId)
                     .year(year).month(month)
                     .status(null)
-                    .salary((long) (totalPay - totalTaxPay))
-                    .totalPay((long) totalPay).totalTaxPay((long) totalTaxPay)
+                    .salary(totalPay - totalTaxPay)
+                    .totalPay(totalPay).totalTaxPay(totalTaxPay)
                     .paymentDay(employmentContract.getPaymentDay()).payPerHour(payPerHour)
-                    .basicHour((long) totalBasicHours).basicPay(totalBasicHours * payPerHour)
-                    .overHour((long) totalOverHours).overPay((long) (totalOverHours * payPerHour * 1.5))
-                    .weeklyHolidayTime((long) totalWeeklyHolidayHours).weeklyHolidayPay(totalWeeklyHolidayHours * payPerHour)
-                    .taxRate(0.094).taxPay((long) totalTaxPay)
+                    .basicHour(totalHours.totalBasicHours()).basicPay(totalHours.totalBasicHours() * payPerHour)
+                    .overHour(totalHours.totalOverHours()).overPay((long)(totalHours.totalOverHours() * payPerHour * 1.5))
+                    .weeklyHolidayTime(totalHours.totalWeeklyHolidayHours()).weeklyHolidayPay(totalHours.totalWeeklyHolidayHours() * payPerHour)
+                    .taxRate(0.094).taxPay(totalTaxPay)
                     .build();
         } else {
             // 당월 X - 급여명세서 조회
@@ -217,5 +202,57 @@ public class PaperService {
         payStub.registerSign();
 
         return new PayStubSignResponse(payStubId);
+    }
+
+    private void createPayStub(WorkPlaceEmployee workPlaceEmployee){
+        // TODO 스케줄러 작성 (매달 1일마다 실행되도록)
+        
+        EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(workPlaceEmployee)
+                .orElseThrow(EmploymentContractNotFoundException::new);
+
+        // 직전 달
+        LocalDate now = LocalDate.now().minusMonths(1);
+        String searchMonth = now.format(DateTimeFormatter.ofPattern("yyyyMM"));
+
+        List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendanceTypeAndAttendDateStartingWith(
+                workPlaceEmployee,
+                "REAL",
+                searchMonth
+        );
+
+        TotalHours totalHours = calcTotalHours(attendanceList);
+
+        PayStub payStub = PayStub.builder()
+                .workPlaceEmployee(workPlaceEmployee)
+                .payPerHour(employmentContract.getPayPerHour())
+                .basicHour(totalHours.totalBasicHours())
+                .overHour(totalHours.totalOverHours())
+                .weeklyHolidayTime(totalHours.totalWeeklyHolidayHours())
+                .tax(BigDecimal.valueOf(0.094))
+                .build();
+
+        payStubRepository.save(payStub);
+    }
+
+    private TotalHours calcTotalHours(List<Attendance> attendanceList){
+        long totalBasicHours = 0;
+        long totalOverHours = 0;
+
+        for (Attendance attendance : attendanceList) {
+            Duration duration = Duration.between(attendance.getRealStartTime(), attendance.getRealEndTime());
+
+            long minutes = duration.toMinutes();
+            double hours = minutes / 60.0;
+
+            int basicHour = (int) Math.min(hours, 8);
+            int overHour = (int) Math.max(hours - 8, 0);
+
+            totalBasicHours += basicHour;
+            totalOverHours += overHour;
+        }
+
+        long totalWeeklyHolidayHours = totalBasicHours / 4 >= 15 ? 7 : 0;
+
+        return new TotalHours(totalBasicHours, totalOverHours, totalWeeklyHolidayHours);
     }
 }
