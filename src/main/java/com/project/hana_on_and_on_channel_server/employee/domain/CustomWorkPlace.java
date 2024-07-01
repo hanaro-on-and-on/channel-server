@@ -1,14 +1,9 @@
 package com.project.hana_on_and_on_channel_server.employee.domain;
 
 import com.project.hana_on_and_on_channel_server.common.domain.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.ColorType;
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,15 +22,24 @@ public class CustomWorkPlace extends BaseEntity {
     @JoinColumn(name = "employee_id")
     private Employee employee;
 
+    @Column(name = "employment_status_type_cd")
+    @Enumerated(EnumType.STRING)
+    private EmployeeStatus employeeStatus;
+
     @Column(nullable = false)
     private String customWorkPlaceNm;
 
     @Column(nullable = false)
     private Long payPerHour;
 
+    @Column(name = "color_type_cd")
+    @Enumerated(EnumType.STRING)
+    private ColorType colorType;
+
     @Builder
-    public CustomWorkPlace(Employee employee, String customWorkPlaceNm, Long payPerHour) {
+    public CustomWorkPlace(Employee employee, String customWorkPlaceNm, EmployeeStatus employeeStatus, Long payPerHour) {
         this.employee = employee;
+        this.employeeStatus = employeeStatus;
         this.customWorkPlaceNm = customWorkPlaceNm;
         this.payPerHour = payPerHour;
     }

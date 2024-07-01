@@ -1,19 +1,25 @@
 package com.project.hana_on_and_on_channel_server.employee.service;
 
+import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
+import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
+import com.project.hana_on_and_on_channel_server.employee.domain.CustomAttendanceMemo;
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
 import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
 import com.project.hana_on_and_on_channel_server.employee.dto.*;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeDuplicatedException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
+import com.project.hana_on_and_on_channel_server.employee.repository.CustomAttendanceMemoRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomWorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
-import com.project.hana_on_and_on_channel_server.owner.domain.enumType.ColorType;
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
+import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
+import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractsRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +27,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService.calculateDailyPayment;
 
 @Service
 @RequiredArgsConstructor
@@ -32,16 +43,19 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final EmploymentContractsRepository employmentContractsRepository;
     private final CustomWorkPlaceRepository customWorkPlaceRepository;
+    private final WorkPlaceEmployeeRepository workPlaceEmployeeRepository;
+    private final AttendanceRepository attendanceRepository;
+    private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
 
     @Transactional(readOnly = true)
-    public WorkPlacesInvitationsListGetResponse getWorkPlacesInvitations(Long userId) {
+    public EmployeeWorkPlaceInvitationListGetResponse getWorkPlacesInvitations(Long userId) {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
         // 휴대폰 번호로, 전자서명 안 된 계약서 찾기
         List<EmploymentContract> employmentContracts = employmentContractsRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
 
-        List<WorkPlacesInvitationsGetResponse> workPlacesInvitationsGetResponseList = employmentContracts.stream()
+        List<EmployeeWorkPlaceInvitationGetResponse> employeeWorkPlaceInvitationGetResponseList = employmentContracts.stream()
                 .map(contract -> {
                     WorkPlaceEmployee workPlaceEmployee = contract.getWorkPlaceEmployee();
                     if (workPlaceEmployee == null) {
@@ -55,7 +69,7 @@ public class EmployeeService {
                     if (owner == null) {
                         throw new OwnerNotFoundException();
                     }
-                    return new WorkPlacesInvitationsGetResponse(
+                    return new EmployeeWorkPlaceInvitationGetResponse(
                             userId,
                             workPlace.getWorkPlaceNm(),
                             workPlace.getColorType(),
@@ -64,21 +78,89 @@ public class EmployeeService {
                 })
                 .toList();
 
-        return WorkPlacesInvitationsListGetResponse.fromEntity(workPlacesInvitationsGetResponseList);
+        return EmployeeWorkPlaceInvitationListGetResponse.fromEntity(employeeWorkPlaceInvitationGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public CustomWorkPlacesCreateResponse createCustomWorkPlaces(Long userId, CustomWorkPlacesCreateRequest customWorkPlacesCreateRequest) {
+    public EmployeeWorkPlaceCustomCreateResponse createCustomWorkPlaces(Long userId, EmployeeWorkPlaceCustomCreateRequest employeeWorkPlaceCustomCreateRequest) {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
         // customWorkPlace 등록
         CustomWorkPlace customWorkPlace = customWorkPlaceRepository.save(CustomWorkPlace.builder()
                         .employee(employee)
-                        .customWorkPlaceNm(customWorkPlacesCreateRequest.customWorkPlaceNm())
-                        .payPerHour(customWorkPlacesCreateRequest.payPerHour())
+                        .customWorkPlaceNm(employeeWorkPlaceCustomCreateRequest.customWorkPlaceNm())
+                        .payPerHour(employeeWorkPlaceCustomCreateRequest.payPerHour())
                 .build());
-        return CustomWorkPlacesCreateResponse.fromEntity(customWorkPlace);
+        return EmployeeWorkPlaceCustomCreateResponse.fromEntity(customWorkPlace);
+    }
+
+    @Transactional(readOnly = true)
+    public EmployeeSalaryListGetResponse getSalaries(Long userId, Integer year, Integer month) {
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // 1일 및 말일 계산 : year + month => yyyymmdd
+        String startAttendDate = String.format("%04d%02d01", year, month);
+        String endAttendDate = String.format("%04d%02d%02d", year, month, YearMonth.of(year, month).lengthOfMonth());
+
+        // attendance + CustomAttendanceMemo
+        List<EmployeeSalaryGetResponse> employeeSalaryGetResponseList = new ArrayList<>();
+
+        // 연결근무지 : attendance 모두 찾기
+        List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployee(employee);
+
+        for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
+            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateBetween(
+                    workPlaceEmployee, startAttendDate, endAttendDate
+            );
+
+            int payment = attendanceList.stream()
+                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getPayPerHour()))
+                    .sum();
+
+            employeeSalaryGetResponseList.add(
+                    new EmployeeSalaryGetResponse(
+                            true,
+                            workPlaceEmployee.getWorkPlaceEmployeeId(),
+                            workPlaceEmployee.getEmployeeStatus() == EmployeeStatus.QUIT,
+                            workPlaceEmployee.getWorkPlace().getWorkPlaceNm(),
+                            workPlaceEmployee.getColorType(),
+                            payment
+                    )
+            );
+        }
+
+        // 수동근무지 : CustomAttendanceMemo 모두 찾기
+        List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
+
+        for (CustomWorkPlace customWorkPlace : customWorkPlaceList) {
+            List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAttendDateBetween(
+                    customWorkPlace, startAttendDate, endAttendDate
+            );
+
+            int payment = customAttendanceMemoList.stream()
+                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getPayPerHour()))
+                    .sum();
+
+            employeeSalaryGetResponseList.add(
+                    new EmployeeSalaryGetResponse(
+                            false,
+                            customWorkPlace.getCustomWorkPlaceId(),
+                            customWorkPlace.getEmployeeStatus() == EmployeeStatus.QUIT,
+                            customWorkPlace.getCustomWorkPlaceNm(),
+                            customWorkPlace.getColorType(),
+                            payment
+                    )
+            );
+        }
+
+        // totalPayment 계산
+        Integer totalPayment = employeeSalaryGetResponseList.stream()
+                .mapToInt(EmployeeSalaryGetResponse::payment)
+                .sum();
+
+        return EmployeeSalaryListGetResponse.fromEntity(year, month, totalPayment, employeeSalaryGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
