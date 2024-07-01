@@ -16,6 +16,7 @@ public interface EmploymentContractRepository extends JpaRepository<EmploymentCo
 
     @Query(
             value = "SELECT EC.EMPLOYMENT_CONTRACT_ID AS employmentContractId, " +
+                    "WP.COLOR_TYPE_CD AS colorTypeCd, " +
                     "WP.WORK_PLACE_NM AS workPlaceNm, " +
                     "EC.CREATED_AT AS employmentContractCreatedAt " +
                     "FROM EMPLOYEES E " +
