@@ -158,7 +158,7 @@ public class EmployeeService {
                 .mapToInt(EmployeeSalaryGetResponse::payment)
                 .sum();
 
-        return EmployeeSalaryListGetResponse.fromEntity(month, totalPayment, employeeSalaryGetResponseList);
+        return EmployeeSalaryListGetResponse.fromEntity(year, month, totalPayment, employeeSalaryGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
