@@ -7,5 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface WorkPlaceEmployeeRepository extends JpaRepository<WorkPlaceEmployee, Long> {
+    List<WorkPlaceEmployee> findByWorkPlaceWorkPlaceId(Long workPlaceId);
     List<WorkPlaceEmployee> findByEmployee(Employee employee);
 }

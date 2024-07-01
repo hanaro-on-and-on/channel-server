@@ -5,7 +5,6 @@ import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
