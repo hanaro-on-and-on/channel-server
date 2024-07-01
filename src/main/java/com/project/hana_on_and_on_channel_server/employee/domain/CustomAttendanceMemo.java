@@ -41,6 +41,8 @@ public class CustomAttendanceMemo extends BaseEntity {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
+    private Integer restMinute;
+
     @Builder
     public CustomAttendanceMemo(CustomWorkPlace customWorkPlace, Long payPerHour, LocalDateTime startTime,
         LocalDateTime endTime) {

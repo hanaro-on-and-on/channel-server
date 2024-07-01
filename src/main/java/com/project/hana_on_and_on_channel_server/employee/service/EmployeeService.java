@@ -116,7 +116,7 @@ public class EmployeeService {
             );
 
             int payment = attendanceList.stream()
-                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getPayPerHour()))
+                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour()))
                     .sum();
 
             employeeSalaryGetResponseList.add(
@@ -140,7 +140,7 @@ public class EmployeeService {
             );
 
             int payment = customAttendanceMemoList.stream()
-                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getPayPerHour()))
+                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getRestMinute(), customAttendanceMemo.getPayPerHour()))
                     .sum();
 
             employeeSalaryGetResponseList.add(
@@ -171,8 +171,15 @@ public class EmployeeService {
         // year + month => yyyymm
         String searchDate = String.format("%04d%02d", year, month);
 
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        String yesterDate = String.format("%04d%02d%02d", yesterday.getYear(), yesterday.getMonthValue(), yesterday.getDayOfMonth());
+
         // attendance + CustomAttendanceMemo
         List<EmployeeSalaryCalendarGetResponse> employeeSalaryCalendarGetResponseList = new ArrayList<>();
+        Integer connectedCurrentPayment = 0;
+        Integer connectedTotalPayment = 0;
+        Integer notConnectedCurrentPayment = 0;
+        Integer notConnectedTotalPayment = 0;
 
         // 연결근무지 : attendance 모두 찾기
         List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployee(employee);
@@ -184,7 +191,12 @@ public class EmployeeService {
 
             for (Attendance attendance : attendanceList) {
                 AttendanceType attendanceType = attendance.getAttendanceType();
-                int payment = calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getPayPerHour());
+                int payment = calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour());
+                if (attendance.getAttendDate().compareTo(yesterDate) <= 0) {    // 1일~어제 까지
+                    connectedCurrentPayment += payment;
+                }
+                connectedTotalPayment += payment;
+
                 employeeSalaryCalendarGetResponseList.add(
                         new EmployeeSalaryCalendarGetResponse(
                                 true,
@@ -192,10 +204,9 @@ public class EmployeeService {
                                 workPlaceEmployee.getColorType(),
                                 attendance.getAttendDate(),
                                 attendanceType,
-                                attendanceType == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getRealEndTime(),
-                                attendanceType == AttendanceType.EXPECT ? attendance.getStartTime() : attendance.getEndTime(),
-                                attendance.getStartTime(),  // TODO 휴게로 변경
-                                attendance.getEndTime(),    // TODO
+                                attendanceType == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
+                                attendanceType == AttendanceType.REAL ? attendance.getRealEndTime() : attendance.getEndTime(),
+                                attendance.getRestMinute(),
                                 payment
                         )
                 );
@@ -210,29 +221,35 @@ public class EmployeeService {
                     customWorkPlace, searchDate
             );
 
-            int payment = customAttendanceMemoList.stream()
-                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getPayPerHour()))
-                    .sum();
+            for (CustomAttendanceMemo customAttendanceMemo : customAttendanceMemoList) {
+                int payment = calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getRestMinute(), customAttendanceMemo.getPayPerHour());
+                if (customAttendanceMemo.getAttendDate().compareTo(yesterDate) <= 0) {    // 1일~어제 까지
+                    notConnectedCurrentPayment += payment;
+                }
+                notConnectedTotalPayment += payment;
 
-            // TODO
-//            employeeSalaryCalendarGetResponseList.add(
-//                    new EmployeeSalaryCalendarGetResponse(
-//                            false,
-//                            customWorkPlace.getCustomWorkPlaceId(),
-//                            customWorkPlace.getEmployeeStatus() == EmployeeStatus.QUIT,
-//                            customWorkPlace.getCustomWorkPlaceNm(),
-//                            customWorkPlace.getColorType(),
-//                            payment
-//                    )
-//            );
+                employeeSalaryCalendarGetResponseList.add(
+                        new EmployeeSalaryCalendarGetResponse(
+                                false,
+                                customWorkPlace.getCustomWorkPlaceNm(),
+                                customWorkPlace.getColorType(),
+                                customAttendanceMemo.getAttendDate(),
+                                AttendanceType.EXPECT,
+                                customAttendanceMemo.getStartTime(),
+                                customAttendanceMemo.getEndTime(),
+                                customAttendanceMemo.getRestMinute(),
+                                payment
+                        )
+                );
+            }
         }
 
-        // totalPayment 계산
-        Integer totalPayment = employeeSalaryCalendarGetResponseList.stream()
-                .mapToInt(EmployeeSalaryCalendarGetResponse::payment)
-                .sum();
-
-        return EmployeeSalaryCalendarListGetResponse.fromEntity(totalPayment, totalPayment, totalPayment, totalPayment, employeeSalaryCalendarGetResponseList); // TODO
+        return EmployeeSalaryCalendarListGetResponse.fromEntity(
+                connectedCurrentPayment + notConnectedCurrentPayment,
+                connectedTotalPayment + notConnectedTotalPayment,
+                connectedCurrentPayment,
+                connectedTotalPayment,
+                employeeSalaryCalendarGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
