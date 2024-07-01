@@ -13,6 +13,8 @@ import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.vo.GeoPoint;
+
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -32,12 +34,12 @@ public class AttendanceService {
     @Transactional
     public AttendanceCheckInResponse checkIn(AttendanceCheckInRequest dto) {
         GeoPoint point = Optional.ofNullable(dto.location())
-            .orElseThrow(GeoLocationNotFoundException::new);
+                .orElseThrow(GeoLocationNotFoundException::new);
         WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(
-            dto.workPlaceEmployeeId()).orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+                dto.workPlaceEmployeeId()).orElseThrow(WorkPlaceEmployeeNotFoundException::new);
         Attendance attendance = attendanceRepository.findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(workPlaceEmployee.getWorkPlaceEmployeeId(), LocalDateTimeUtil.localDateTimeToYMDFormat(LocalDateTime.now()));
 
-        if(attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 500.0, dto.workPlaceEmployeeId())){
+        if (attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 500.0, dto.workPlaceEmployeeId())) {
             attendance.checkIn(LocalDateTime.now());
         }
 
@@ -51,16 +53,25 @@ public class AttendanceService {
     @Transactional
     public AttendanceCheckOutResponse checkOut(AttendanceCheckOutRequest dto) {
         GeoPoint point = Optional.ofNullable(dto.location())
-            .orElseThrow(GeoLocationNotFoundException::new);
+                .orElseThrow(GeoLocationNotFoundException::new);
         WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(
-            dto.workPlaceEmployeeId()).orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+                dto.workPlaceEmployeeId()).orElseThrow(WorkPlaceEmployeeNotFoundException::new);
         Attendance attendance = attendanceRepository.findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(workPlaceEmployee.getWorkPlaceEmployeeId(), LocalDateTimeUtil.localDateTimeToYMDFormat(LocalDateTime.now()));
 
-        if(attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 500.0, dto.workPlaceEmployeeId())){
+        if (attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 500.0, dto.workPlaceEmployeeId())) {
             attendance.checkOut(LocalDateTime.now());
             attendance.updateAttendanceType(AttendanceType.REAL);
         }
 
         return AttendanceCheckOutResponse.fromEntity(attendance);
+    }
+
+    public static Integer calculateDailyPayment(LocalDateTime startTime, LocalDateTime endTime, Long payPerHour) {
+        LocalDateTime startZeroSecondTime = LocalDateTime.of(startTime.getYear(), startTime.getMonth(), startTime.getDayOfMonth(), startTime.getHour(), startTime.getMinute(), 0);
+        LocalDateTime endZeroSecondTime = LocalDateTime.of(endTime.getYear(), endTime.getMonth(), endTime.getDayOfMonth(), endTime.getHour(), endTime.getMinute(), 0);
+        int totalDurationMinutes = (int) Duration.between(startZeroSecondTime, endZeroSecondTime).toMinutes();
+
+        double payment = totalDurationMinutes * payPerHour / 60.0;
+        return (int) Math.floor(payment);
     }
 }

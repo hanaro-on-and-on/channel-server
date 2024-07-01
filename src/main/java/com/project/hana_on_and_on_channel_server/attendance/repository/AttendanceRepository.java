@@ -1,8 +1,12 @@
 package com.project.hana_on_and_on_channel_server.attendance.repository;
 
 import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
+import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
@@ -20,4 +24,5 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     Boolean existsInWorkPlaceRadius(Double longitude, Double latitude, Double radius, Long workPlaceId);
 
     Attendance findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(Long workPlaceEmployeeId, String attendDate);
+    List<Attendance> findByWorkPlaceEmployeeAndAttendDateBetween(WorkPlaceEmployee workPlaceEmployee, String startAttendDate, String endtAttendDate);
 }

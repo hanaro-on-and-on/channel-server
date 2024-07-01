@@ -41,7 +41,7 @@ public class Attendance extends BaseEntity {
     private Long payPerHour;
 
     @Column(nullable = false)
-    private String attendDate;
+    private String attendDate;  // yyyymmdd
 
     @Column(nullable = false)
     private LocalDateTime startTime;
