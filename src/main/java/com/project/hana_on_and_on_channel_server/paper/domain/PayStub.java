@@ -1,14 +1,9 @@
 package com.project.hana_on_and_on_channel_server.paper.domain;
 
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import com.project.hana_on_and_on_channel_server.paper.domain.enumType.PayStubStatus;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -28,8 +23,9 @@ public class PayStub {
     @JoinColumn(name = "work_place_employee_id")
     private WorkPlaceEmployee workPlaceEmployee;
 
-    @Column(nullable = false)
-    private Boolean status;
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private PayStubStatus status;
 
     @Column(nullable = false)
     private Long payPerHour;
@@ -70,11 +66,11 @@ public class PayStub {
     }
 
     @Builder
-    public PayStub(WorkPlaceEmployee workPlaceEmployee, Boolean status, Long payPerHour,
+    public PayStub(WorkPlaceEmployee workPlaceEmployee, Long payPerHour,
         Long basicHour,
         Long overHour, String employeeSign, Long weeklyHolidayTime, BigDecimal tax) {
         this.workPlaceEmployee = workPlaceEmployee;
-        this.status = status;
+        this.status = PayStubStatus.READY;
         this.payPerHour = payPerHour;
         this.basicHour = basicHour;
         this.overHour = overHour;
