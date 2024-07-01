@@ -16,12 +16,11 @@ import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmplo
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.domain.PayStub;
 import com.project.hana_on_and_on_channel_server.paper.domain.WorkTime;
-import com.project.hana_on_and_on_channel_server.paper.dto.EmployeeAndWorkPlaceEmployeeConnectResponse;
-import com.project.hana_on_and_on_channel_server.paper.dto.EmploymentContractGetResponse;
-import com.project.hana_on_and_on_channel_server.paper.dto.EmploymentContractListGetResponse;
-import com.project.hana_on_and_on_channel_server.paper.dto.MonthlyPayStubGetResponse;
+import com.project.hana_on_and_on_channel_server.paper.domain.enumType.PayStubStatus;
+import com.project.hana_on_and_on_channel_server.paper.dto.*;
 import com.project.hana_on_and_on_channel_server.paper.exception.EmployeeContractAlreadyConnectedException;
 import com.project.hana_on_and_on_channel_server.paper.exception.EmploymentContractNotFoundException;
+import com.project.hana_on_and_on_channel_server.paper.exception.PayStubInvalidException;
 import com.project.hana_on_and_on_channel_server.paper.exception.PayStubNotFoundException;
 import com.project.hana_on_and_on_channel_server.paper.projection.EmploymentContractSummary;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
@@ -152,7 +151,7 @@ public class PaperService {
                     .payStubId(payStub.getPayStubId())
                     .workPlaceEmployeeId(workPlaceEmployeeId)
                     .year(year).month(month)
-                    .status("READY")
+                    .status(payStub.getStatus().toString())
                     .salary(payStub.calcTotalPay()-payStub.calcTotalTaxPay(0.094))
                     .totalPay(payStub.calcTotalPay()).totalTaxPay(payStub.calcTotalTaxPay(0.094))
                     .paymentDay(employmentContract.getPaymentDay()).payPerHour(payStub.getPayPerHour())
@@ -198,5 +197,25 @@ public class PaperService {
 
         double basicHour = totalDurationMinutes / 60.0;
         return (int)Math.floor(basicHour);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public PayStubSignResponse signPayStub(Long userId, Long payStubId){
+        PayStub payStub = payStubRepository.findById(payStubId).orElseThrow(PayStubNotFoundException::new);
+
+        // 본인 급여명세서가 아닐 경우 예외 처리
+        if(userId != payStub.getWorkPlaceEmployee().getEmployee().getUserId()){
+            throw new PayStubInvalidException(payStubId);
+        }
+
+        // 서명요청 상태가 아닐 경우 예외 처리
+        if(payStub.getStatus()!= PayStubStatus.SIGN){
+            throw new PayStubInvalidException(payStubId);
+        }
+
+        // payStub 상태를 WATING, employee 서명을 true로 변경
+        payStub.registerSign();
+
+        return new PayStubSignResponse(payStubId);
     }
 }

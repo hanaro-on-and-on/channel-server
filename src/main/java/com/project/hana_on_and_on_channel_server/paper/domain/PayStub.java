@@ -23,7 +23,7 @@ public class PayStub {
     @JoinColumn(name = "work_place_employee_id")
     private WorkPlaceEmployee workPlaceEmployee;
 
-    @Column(name = "status")
+    @Column(name = "status_type_cd")
     @Enumerated(EnumType.STRING)
     private PayStubStatus status;
 
@@ -36,8 +36,8 @@ public class PayStub {
     @Column(nullable = false)
     private Long overHour;
 
-    @Column(nullable = false, length = 255)
-    private String employeeSign;
+    @Column(nullable = false)
+    private Boolean employeeSign;
 
     @Column(nullable = false)
     private Long weeklyHolidayTime;
@@ -65,6 +65,11 @@ public class PayStub {
         return this.weeklyHolidayTime * this.payPerHour;
     }
 
+    public void registerSign(){
+        this.status = PayStubStatus.WAITING;
+        this.employeeSign = Boolean.TRUE;
+    }
+
     @Builder
     public PayStub(WorkPlaceEmployee workPlaceEmployee, Long payPerHour,
         Long basicHour,
@@ -74,7 +79,7 @@ public class PayStub {
         this.payPerHour = payPerHour;
         this.basicHour = basicHour;
         this.overHour = overHour;
-        this.employeeSign = employeeSign;
+        this.employeeSign = Boolean.FALSE;
         this.weeklyHolidayTime = weeklyHolidayTime;
         this.tax = tax;
     }
