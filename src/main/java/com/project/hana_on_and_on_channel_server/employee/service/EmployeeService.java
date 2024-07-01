@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -99,9 +100,9 @@ public class EmployeeService {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
-        // year-month에 해당하는 LocalDateTime 찾기
-        LocalDateTime startDateTime = LocalDateTime.of(year, month, 1, 0, 0);
-        LocalDateTime endDateTime = startDateTime.plusMonths(1).minusDays(1).plusHours(23).plusMinutes(59).plusSeconds(59);
+        // 1일 및 말일 계산 : year + month => yyyymmdd
+        String startAttendDate = String.format("%04d%02d01", year, month);
+        String endAttendDate = String.format("%04d%02d%02d", year, month, YearMonth.of(year, month).lengthOfMonth());
 
         // attendance + CustomAttendanceMemo
         List<EmployeeSalaryGetResponse> employeeSalaryGetResponseList = new ArrayList<>();
@@ -110,8 +111,8 @@ public class EmployeeService {
         List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployee(employee);
 
         for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
-            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndCreatedAtBetween(
-                    workPlaceEmployee, startDateTime, endDateTime
+            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateBetween(
+                    workPlaceEmployee, startAttendDate, endAttendDate
             );
 
             int payment = attendanceList.stream()
@@ -133,8 +134,8 @@ public class EmployeeService {
         List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
 
         for (CustomWorkPlace customWorkPlace : customWorkPlaceList) {
-            List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndCreatedAtBetween(
-                    customWorkPlace, startDateTime, endDateTime
+            List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAttendDateBetween(
+                    customWorkPlace, startAttendDate, endAttendDate
             );
 
             int payment = customAttendanceMemoList.stream()
