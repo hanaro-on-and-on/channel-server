@@ -42,8 +42,9 @@ public class Attendance extends BaseEntity {
     private LocalDateTime endTime;
 
     private LocalDateTime realStartTime;
-
     private LocalDateTime realEndTime;
+
+    private Integer restMinute;
 
     public void checkIn(LocalDateTime realStartTime) {
         // 이미 출석 했을 경우 예외 처리

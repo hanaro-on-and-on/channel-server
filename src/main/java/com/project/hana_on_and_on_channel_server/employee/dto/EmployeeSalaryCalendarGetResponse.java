@@ -14,8 +14,7 @@ public record EmployeeSalaryCalendarGetResponse(
         AttendanceType attendanceType,
         LocalDateTime startTime,
         LocalDateTime endDate,
-        LocalDateTime restStartDate,
-        LocalDateTime restEndDate,
+        Integer restMinute,
         Integer payment
 ) {
 }
