@@ -6,10 +6,15 @@ import java.time.format.DateTimeFormatter;
 public class LocalDateTimeUtil {
 
     private final static DateTimeFormatter ymdFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private final static DateTimeFormatter ymdDashFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final static DateTimeFormatter dayFormat = DateTimeFormatter.ofPattern("dd");
 
     public static String localDateTimeToYMDFormat(LocalDateTime localDateTime) {
         return localDateTime.format(ymdFormat);
+    }
+
+    public static String localDateTimeToYMDDashFormat(LocalDateTime localDateTime) {
+        return localDateTime.format(ymdDashFormat);
     }
 
     public static Integer localDateTimeToDayFormat(LocalDateTime localDateTime) {
