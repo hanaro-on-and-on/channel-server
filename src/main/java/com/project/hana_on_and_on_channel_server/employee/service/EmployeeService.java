@@ -1,6 +1,7 @@
 package com.project.hana_on_and_on_channel_server.employee.service;
 
 import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
+import com.project.hana_on_and_on_channel_server.attendance.domain.enumType.AttendanceType;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomAttendanceMemo;
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
@@ -100,9 +101,8 @@ public class EmployeeService {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
-        // 1일 및 말일 계산 : year + month => yyyymmdd
-        String startAttendDate = String.format("%04d%02d01", year, month);
-        String endAttendDate = String.format("%04d%02d%02d", year, month, YearMonth.of(year, month).lengthOfMonth());
+        // year + month => yyyymm
+        String searchDate = String.format("%04d%02d", year, month);
 
         // attendance + CustomAttendanceMemo
         List<EmployeeSalaryGetResponse> employeeSalaryGetResponseList = new ArrayList<>();
@@ -111,8 +111,8 @@ public class EmployeeService {
         List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployee(employee);
 
         for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
-            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateBetween(
-                    workPlaceEmployee, startAttendDate, endAttendDate
+            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateStartingWith(
+                    workPlaceEmployee, searchDate
             );
 
             int payment = attendanceList.stream()
@@ -135,8 +135,8 @@ public class EmployeeService {
         List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
 
         for (CustomWorkPlace customWorkPlace : customWorkPlaceList) {
-            List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAttendDateBetween(
-                    customWorkPlace, startAttendDate, endAttendDate
+            List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAndAttendDateStartingWith(
+                    customWorkPlace, searchDate
             );
 
             int payment = customAttendanceMemoList.stream()
@@ -161,6 +161,78 @@ public class EmployeeService {
                 .sum();
 
         return EmployeeSalaryListGetResponse.fromEntity(year, month, totalPayment, employeeSalaryGetResponseList);
+    }
+
+    @Transactional(readOnly = true)
+    public EmployeeSalaryCalendarListGetResponse getCalendarSalaries(Long userId, Integer year, Integer month) {
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // year + month => yyyymm
+        String searchDate = String.format("%04d%02d", year, month);
+
+        // attendance + CustomAttendanceMemo
+        List<EmployeeSalaryCalendarGetResponse> employeeSalaryCalendarGetResponseList = new ArrayList<>();
+
+        // 연결근무지 : attendance 모두 찾기
+        List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployee(employee);
+
+        for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
+            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateStartingWith(
+                    workPlaceEmployee, searchDate
+            );
+
+            for (Attendance attendance : attendanceList) {
+                AttendanceType attendanceType = attendance.getAttendanceType();
+                int payment = calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getPayPerHour());
+                employeeSalaryCalendarGetResponseList.add(
+                        new EmployeeSalaryCalendarGetResponse(
+                                true,
+                                workPlaceEmployee.getWorkPlace().getWorkPlaceNm(),
+                                workPlaceEmployee.getColorType(),
+                                attendance.getAttendDate(),
+                                attendanceType,
+                                attendanceType == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getRealEndTime(),
+                                attendanceType == AttendanceType.EXPECT ? attendance.getStartTime() : attendance.getEndTime(),
+                                attendance.getStartTime(),  // TODO 휴게로 변경
+                                attendance.getEndTime(),    // TODO
+                                payment
+                        )
+                );
+            }
+        }
+
+        // 수동근무지 : CustomAttendanceMemo 모두 찾기
+        List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
+
+        for (CustomWorkPlace customWorkPlace : customWorkPlaceList) {
+            List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAndAttendDateStartingWith(
+                    customWorkPlace, searchDate
+            );
+
+            int payment = customAttendanceMemoList.stream()
+                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getPayPerHour()))
+                    .sum();
+
+            // TODO
+//            employeeSalaryCalendarGetResponseList.add(
+//                    new EmployeeSalaryCalendarGetResponse(
+//                            false,
+//                            customWorkPlace.getCustomWorkPlaceId(),
+//                            customWorkPlace.getEmployeeStatus() == EmployeeStatus.QUIT,
+//                            customWorkPlace.getCustomWorkPlaceNm(),
+//                            customWorkPlace.getColorType(),
+//                            payment
+//                    )
+//            );
+        }
+
+        // totalPayment 계산
+        Integer totalPayment = employeeSalaryCalendarGetResponseList.stream()
+                .mapToInt(EmployeeSalaryCalendarGetResponse::payment)
+                .sum();
+
+        return EmployeeSalaryCalendarListGetResponse.fromEntity(totalPayment, totalPayment, totalPayment, totalPayment, employeeSalaryCalendarGetResponseList); // TODO
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

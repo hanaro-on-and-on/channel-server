@@ -1,5 +1,6 @@
 package com.project.hana_on_and_on_channel_server.employee.controller;
 
+import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeSalaryCalendarListGetResponse;
 import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeSalaryListGetResponse;
 import com.project.hana_on_and_on_channel_server.employee.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
@@ -20,4 +21,9 @@ public class EmployeeSalaryController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/calendar")
+    public ResponseEntity<EmployeeSalaryCalendarListGetResponse> getCalendarSalaries(@AuthenticationPrincipal Long userId, @RequestParam Integer year, @RequestParam Integer month){
+        EmployeeSalaryCalendarListGetResponse response = employeeService.getCalendarSalaries(userId, year, month);
+        return ResponseEntity.ok(response);
+    }
 }

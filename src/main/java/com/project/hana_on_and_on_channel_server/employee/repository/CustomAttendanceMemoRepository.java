@@ -8,5 +8,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CustomAttendanceMemoRepository extends JpaRepository<CustomAttendanceMemo, Long> {
-    List<CustomAttendanceMemo> findByCustomWorkPlaceAndAndAttendDateStartingWith(CustomWorkPlace customWorkPlace, String searchDate);
+    List<CustomAttendanceMemo> findByCustomWorkPlaceAndAndAttendDateStartingWith(
+            CustomWorkPlace customWorkPlace,
+            String searchDate
+    );
 }

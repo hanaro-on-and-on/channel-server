@@ -21,11 +21,18 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     )
     Boolean existsInWorkPlaceRadius(Double longitude, Double latitude, Double radius, Long workPlaceId);
 
-    Attendance findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(Long workPlaceEmployeeId, String attendDate);
+    Attendance findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(
+            Long workPlaceEmployeeId,
+            String attendDate
+    );
 
+    List<Attendance> findByWorkPlaceEmployeeAndAttendDateStartingWith(
+            WorkPlaceEmployee workPlaceEmployee,
+            String searchDate
+    );
     List<Attendance> findByWorkPlaceEmployeeAndAttendanceTypeAndAttendDateStartingWith(
             WorkPlaceEmployee workPlaceEmployee,
             String attendanceType,
-            String searchMonth
+            String searchDate
     );
 }
