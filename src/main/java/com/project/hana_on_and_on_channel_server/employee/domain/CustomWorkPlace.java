@@ -1,6 +1,7 @@
 package com.project.hana_on_and_on_channel_server.employee.domain;
 
 import com.project.hana_on_and_on_channel_server.common.domain.BaseEntity;
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.ColorType;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -30,6 +31,10 @@ public class CustomWorkPlace extends BaseEntity {
 
     @Column(nullable = false)
     private Long payPerHour;
+
+    @Column(name = "color_type_cd")
+    @Enumerated(EnumType.STRING)
+    private ColorType colorType;
 
     @Builder
     public CustomWorkPlace(Employee employee, String customWorkPlaceNm, EmployeeStatus employeeStatus, Long payPerHour) {

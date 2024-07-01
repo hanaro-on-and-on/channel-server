@@ -125,6 +125,7 @@ public class EmployeeService {
                             workPlaceEmployee.getWorkPlaceEmployeeId(),
                             workPlaceEmployee.getEmployeeStatus() == EmployeeStatus.QUIT,
                             workPlaceEmployee.getWorkPlace().getWorkPlaceNm(),
+                            workPlaceEmployee.getColorType(),
                             payment
                     )
             );
@@ -148,6 +149,7 @@ public class EmployeeService {
                             customWorkPlace.getCustomWorkPlaceId(),
                             customWorkPlace.getEmployeeStatus() == EmployeeStatus.QUIT,
                             customWorkPlace.getCustomWorkPlaceNm(),
+                            customWorkPlace.getColorType(),
                             payment
                     )
             );
