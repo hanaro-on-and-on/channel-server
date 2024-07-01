@@ -85,9 +85,8 @@ public class OwnerService {
         // workPlace 존재 여부 확인
         WorkPlace workPlace = workPlaceRepository.findById(workPlaceId).orElseThrow(WorkPlaceNotFoundException::new);
 
-        // 1일 및 말일 계산 : year + month => yyyymmdd
-        String startAttendDate = String.format("%04d%02d01", year, month);
-        String endAttendDate = String.format("%04d%02d%02d", year, month, YearMonth.of(year, month).lengthOfMonth());
+        // year + month => yyyymm
+        String searchDate = String.format("%04d%02d", year, month);
 
         // workplace의 employee별로 attendance 모두 찾기
         List<OwnerSalaryGetResponse> ownerSalaryGetResponseList = new ArrayList<>();
@@ -95,8 +94,8 @@ public class OwnerService {
         List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceId(workPlaceId);
 
         for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
-            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateBetween(
-                    workPlaceEmployee, startAttendDate, endAttendDate
+            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateStartingWith(
+                    workPlaceEmployee, searchDate
             );
 
             int payment = attendanceList.stream()
