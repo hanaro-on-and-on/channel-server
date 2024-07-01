@@ -1,14 +1,9 @@
 package com.project.hana_on_and_on_channel_server.paper.domain;
 
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import com.project.hana_on_and_on_channel_server.paper.domain.enumType.PayStubStatus;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -28,8 +23,9 @@ public class PayStub {
     @JoinColumn(name = "work_place_employee_id")
     private WorkPlaceEmployee workPlaceEmployee;
 
-    @Column(nullable = false)
-    private Boolean status;
+    @Column(name = "status_type_cd")
+    @Enumerated(EnumType.STRING)
+    private PayStubStatus status;
 
     @Column(nullable = false)
     private Long payPerHour;
@@ -40,8 +36,8 @@ public class PayStub {
     @Column(nullable = false)
     private Long overHour;
 
-    @Column(nullable = false, length = 255)
-    private String employeeSign;
+    @Column(nullable = false)
+    private Boolean employeeSign;
 
     @Column(nullable = false)
     private Long weeklyHolidayTime;
@@ -49,16 +45,40 @@ public class PayStub {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal tax;
 
+    public Long calcTotalPay(){
+        return (long) (this.basicHour*this.payPerHour+this.overHour*this.payPerHour*1.5+this.weeklyHolidayTime*this.payPerHour);
+    }
+
+    public Long calcTotalTaxPay(double taxRate){
+        return (long)Math.floor(this.calcTotalPay()*taxRate);
+    }
+
+    public Long calcBasicPay(){
+        return this.basicHour * this.payPerHour;
+    }
+
+    public Long calcOverPay(double overTimeRate){
+        return (long)(this.overHour * this.payPerHour * overTimeRate);
+    }
+
+    public Long calcWeeklyHolidayPay(){
+        return this.weeklyHolidayTime * this.payPerHour;
+    }
+
+    public void registerSign(){
+        this.status = PayStubStatus.WAITING;
+        this.employeeSign = Boolean.TRUE;
+    }
+
     @Builder
-    public PayStub(WorkPlaceEmployee workPlaceEmployee, Boolean status, Long payPerHour,
-        Long basicHour,
-        Long overHour, String employeeSign, Long weeklyHolidayTime, BigDecimal tax) {
+    public PayStub(WorkPlaceEmployee workPlaceEmployee, Long payPerHour,
+        Long basicHour, Long overHour, Long weeklyHolidayTime, BigDecimal tax) {
         this.workPlaceEmployee = workPlaceEmployee;
-        this.status = status;
+        this.status = PayStubStatus.READY;
         this.payPerHour = payPerHour;
         this.basicHour = basicHour;
         this.overHour = overHour;
-        this.employeeSign = employeeSign;
+        this.employeeSign = Boolean.FALSE;
         this.weeklyHolidayTime = weeklyHolidayTime;
         this.tax = tax;
     }

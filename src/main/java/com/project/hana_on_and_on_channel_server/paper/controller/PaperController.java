@@ -1,8 +1,6 @@
 package com.project.hana_on_and_on_channel_server.paper.controller;
 
-import com.project.hana_on_and_on_channel_server.paper.dto.EmployeeAndWorkPlaceEmployeeConnectResponse;
-import com.project.hana_on_and_on_channel_server.paper.dto.EmploymentContractGetResponse;
-import com.project.hana_on_and_on_channel_server.paper.dto.EmploymentContractListGetResponse;
+import com.project.hana_on_and_on_channel_server.paper.dto.*;
 import com.project.hana_on_and_on_channel_server.paper.service.PaperService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +31,24 @@ public class PaperController {
     @GetMapping("/employment-contracts/{employmentContractId}/e-sign")
     public ResponseEntity<EmployeeAndWorkPlaceEmployeeConnectResponse> signEmploymentContractAndConnectEmployeeToWorkPlace(@AuthenticationPrincipal Long userId, @PathVariable Long employmentContractId){
         EmployeeAndWorkPlaceEmployeeConnectResponse response = paperService.signEmploymentContractAndConnectEmployeeToWorkPlace(userId, employmentContractId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{workPlaceEmployeeId}/pay-stubs")
+    public ResponseEntity<MonthlyPayStubGetResponse> getMonthlyPayStubWithAttendance(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceEmployeeId, @RequestParam int year, @RequestParam int month){
+        MonthlyPayStubGetResponse response = paperService.getMonthlyPayStubWithAttendance(userId, workPlaceEmployeeId, year, month);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/custom/{customWorkPlaceId}/pay-stubs")
+    public ResponseEntity<MonthlyPayStubGetResponse> getMonthlyPayStubWithCustomAttendance(@AuthenticationPrincipal Long userId, @PathVariable Long customWorkPlaceId, @RequestParam int year, @RequestParam int month){
+        MonthlyPayStubGetResponse response = paperService.getMonthlyPayStubWithCustomAttendance(userId, customWorkPlaceId, year, month);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/pay-stubs/{payStubId}/e-sign")
+    public ResponseEntity<PayStubSignResponse> signPayStub(@AuthenticationPrincipal Long userId, @PathVariable Long payStubId){
+        PayStubSignResponse response = paperService.signPayStub(userId, payStubId);
         return ResponseEntity.ok(response);
     }
 }
