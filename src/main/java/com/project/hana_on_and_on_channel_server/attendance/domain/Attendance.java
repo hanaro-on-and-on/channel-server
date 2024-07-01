@@ -4,16 +4,8 @@ import com.project.hana_on_and_on_channel_server.attendance.domain.enumType.Atte
 import com.project.hana_on_and_on_channel_server.attendance.exception.AttendanceDuplicatedException;
 import com.project.hana_on_and_on_channel_server.common.domain.BaseEntity;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -41,7 +33,7 @@ public class Attendance extends BaseEntity {
     private Long payPerHour;
 
     @Column(nullable = false)
-    private String attendDate;  // yyyymmdd
+    private String attendDate;
 
     @Column(nullable = false)
     private LocalDateTime startTime;
@@ -71,15 +63,15 @@ public class Attendance extends BaseEntity {
 
     @Builder
     public Attendance(WorkPlaceEmployee workPlaceEmployee, AttendanceType attendanceType, Long payPerHour,
-        LocalDateTime startTime, LocalDateTime endTime, LocalDateTime realStartTime,
-        LocalDateTime realEndTime) {
+                      String attendDate,LocalDateTime startTime, LocalDateTime endTime, LocalDateTime realStartTime,
+                      LocalDateTime realEndTime) {
         this.workPlaceEmployee = workPlaceEmployee;
         this.attendanceType = attendanceType;
         this.payPerHour = payPerHour;
+        this.attendDate = attendDate;
         this.startTime = startTime;
         this.endTime = endTime;
         this.realStartTime = realStartTime;
         this.realEndTime = realEndTime;
     }
-
 }

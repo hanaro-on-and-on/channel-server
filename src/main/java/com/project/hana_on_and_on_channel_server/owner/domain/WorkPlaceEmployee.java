@@ -9,6 +9,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "work_place_employee")
@@ -26,6 +29,12 @@ public class WorkPlaceEmployee extends BaseEntity {
     @Column(name = "color_type_cd")
     @Enumerated(EnumType.STRING)
     private ColorType colorType;
+
+    @Column(name = "work_start_date")
+    private LocalDate workStartDate;
+
+    @Column(name = "work_end_date")
+    private LocalDate workEndDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "work_place_id")
