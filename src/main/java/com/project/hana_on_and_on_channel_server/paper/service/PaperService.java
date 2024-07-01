@@ -2,8 +2,13 @@ package com.project.hana_on_and_on_channel_server.paper.service;
 
 import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
+import com.project.hana_on_and_on_channel_server.employee.domain.CustomAttendanceMemo;
+import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
 import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
+import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
+import com.project.hana_on_and_on_channel_server.employee.repository.CustomAttendanceMemoRepository;
+import com.project.hana_on_and_on_channel_server.employee.repository.CustomWorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
@@ -29,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -40,6 +46,8 @@ public class PaperService {
     private final AttendanceRepository attendanceRepository;
     private final PayStubRepository payStubRepository;
     private final WorkPlaceEmployeeRepository workPlaceEmployeeRepository;
+    private final CustomWorkPlaceRepository customWorkPlaceRepository;
+    private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public List<EmploymentContractListGetResponse> findEmploymentContractList (Long userId){
@@ -124,7 +132,8 @@ public class PaperService {
 
             return MonthlyPayStubGetResponse.builder()
                     .payStubId(null)
-                    .workPlaceEmployeeId(workPlaceEmployeeId).year(year).month(month)
+                    .workPlaceEmployeeId(workPlaceEmployeeId)
+                    .year(year).month(month)
                     .status(null)
                     .salary((long) (totalPay - totalTaxPay))
                     .totalPay((long) totalPay).totalTaxPay((long) totalTaxPay)
@@ -141,7 +150,8 @@ public class PaperService {
 
             return MonthlyPayStubGetResponse.builder()
                     .payStubId(payStub.getPayStubId())
-                    .workPlaceEmployeeId(workPlaceEmployeeId).year(year).month(month)
+                    .workPlaceEmployeeId(workPlaceEmployeeId)
+                    .year(year).month(month)
                     .status("READY")
                     .salary(payStub.calcTotalPay()-payStub.calcTotalTaxPay(0.094))
                     .totalPay(payStub.calcTotalPay()).totalTaxPay(payStub.calcTotalTaxPay(0.094))
@@ -152,5 +162,41 @@ public class PaperService {
                     .taxRate(9.4).taxPay(payStub.calcTotalTaxPay(0.094))
                     .build();
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public MonthlyPayStubGetResponse getMonthlyPayStubWithCustomAttendance(Long userId, Long customWorkPlaceId, int year, int month){
+        CustomWorkPlace customWorkPlace = customWorkPlaceRepository.findById(customWorkPlaceId).orElseThrow(CustomWorkPlaceNotFoundException::new);
+
+        String searchDate = String.format("%d%02d", year, month);
+        List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAndAttendDateStartingWith(customWorkPlace, searchDate);
+
+        long basicHour = customAttendanceMemoList.stream()
+                .mapToInt(customAttendaceMemo -> calculateDailyBasicHour(customAttendaceMemo.getStartTime(), customAttendaceMemo.getEndTime()))
+                .sum();
+
+        return MonthlyPayStubGetResponse.builder()
+                .payStubId(null)
+                .workPlaceEmployeeId(null).year(year).month(month)
+                .status(null)
+                .salary(basicHour*customWorkPlace.getPayPerHour()-(long)Math.floor(basicHour*customWorkPlace.getPayPerHour()*0.094))
+                .totalPay(basicHour*customWorkPlace.getPayPerHour())
+                .totalTaxPay((long)Math.floor(basicHour*customWorkPlace.getPayPerHour()*0.094))
+                .paymentDay(null).payPerHour(customWorkPlace.getPayPerHour())
+                .basicHour(basicHour)
+                .basicPay(basicHour*customWorkPlace.getPayPerHour())
+                .overHour(null).overPay(null).weeklyHolidayTime(null).weeklyHolidayPay(null)
+                .taxRate(9.4).taxPay((long)Math.floor(basicHour*customWorkPlace.getPayPerHour()*0.094))
+                .build();
+    }
+
+    private Integer calculateDailyBasicHour(LocalDateTime startTime, LocalDateTime endTime) {
+
+        LocalDateTime startZeroSecondTime = LocalDateTime.of(startTime.getYear(), startTime.getMonth(), startTime.getDayOfMonth(), startTime.getHour(), startTime.getMinute(), 0);
+        LocalDateTime endZeroSecondTime = LocalDateTime.of(endTime.getYear(), endTime.getMonth(), endTime.getDayOfMonth(), endTime.getHour(), endTime.getMinute(), 0);
+        int totalDurationMinutes = (int) Duration.between(startZeroSecondTime, endZeroSecondTime).toMinutes();
+
+        double basicHour = totalDurationMinutes / 60.0;
+        return (int)Math.floor(basicHour);
     }
 }
