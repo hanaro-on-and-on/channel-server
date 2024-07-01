@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public interface EmploymentContractSummary {
     Long getEmploymentContractId();
+    String getColorTypeCd();
     String getWorkPlaceNm();
     LocalDateTime getEmploymentContractCreatedAt();
 }
