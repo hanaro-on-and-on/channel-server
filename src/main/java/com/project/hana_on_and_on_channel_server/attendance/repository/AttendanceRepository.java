@@ -7,9 +7,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
+    List<Attendance> findByWorkPlaceEmployeeAndAttendDateStartingWith(
+            WorkPlaceEmployee workPlaceEmployee,
+            String searchDate
+    );
     List<Attendance> findByWorkPlaceEmployeeAndAttendanceTypeAndAttendDateStartingWith(
             WorkPlaceEmployee workPlaceEmployee,
             String attendanceType,
-            String searchMonth
+            String searchDate
     );
 }

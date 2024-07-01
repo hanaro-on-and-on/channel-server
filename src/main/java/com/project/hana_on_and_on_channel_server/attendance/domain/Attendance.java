@@ -1,5 +1,6 @@
 package com.project.hana_on_and_on_channel_server.attendance.domain;
 
+import com.project.hana_on_and_on_channel_server.attendance.domain.enumType.AttendanceType;
 import com.project.hana_on_and_on_channel_server.common.domain.BaseEntity;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import jakarta.persistence.Column;
@@ -30,7 +31,7 @@ public class Attendance extends BaseEntity {
     private WorkPlaceEmployee workPlaceEmployee;
 
     @Column(nullable = false)
-    private String attendanceType;
+    private AttendanceType attendanceType;
 
     @Column(nullable = false)
     private Long payPerHour;
@@ -51,7 +52,7 @@ public class Attendance extends BaseEntity {
     private LocalDateTime realEndTime;
 
     @Builder
-    public Attendance(WorkPlaceEmployee workPlaceEmployee, String attendanceType, Long payPerHour,
+    public Attendance(WorkPlaceEmployee workPlaceEmployee, AttendanceType attendanceType, Long payPerHour,
                       String attendDate,LocalDateTime startTime, LocalDateTime endTime, LocalDateTime realStartTime,
                       LocalDateTime realEndTime) {
         this.workPlaceEmployee = workPlaceEmployee;
