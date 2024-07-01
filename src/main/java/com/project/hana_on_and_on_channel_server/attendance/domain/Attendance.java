@@ -36,6 +36,9 @@ public class Attendance extends BaseEntity {
     private Long payPerHour;
 
     @Column(nullable = false)
+    private String attendDate;
+
+    @Column(nullable = false)
     private LocalDateTime startTime;
 
     @Column(nullable = false)
@@ -49,11 +52,12 @@ public class Attendance extends BaseEntity {
 
     @Builder
     public Attendance(WorkPlaceEmployee workPlaceEmployee, String attendanceType, Long payPerHour,
-        LocalDateTime startTime, LocalDateTime endTime, LocalDateTime realStartTime,
-        LocalDateTime realEndTime) {
+                      String attendDate,LocalDateTime startTime, LocalDateTime endTime, LocalDateTime realStartTime,
+                      LocalDateTime realEndTime) {
         this.workPlaceEmployee = workPlaceEmployee;
         this.attendanceType = attendanceType;
         this.payPerHour = payPerHour;
+        this.attendDate = attendDate;
         this.startTime = startTime;
         this.endTime = endTime;
         this.realStartTime = realStartTime;

@@ -49,6 +49,26 @@ public class PayStub {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal tax;
 
+    public Long calcTotalPay(){
+        return (long) (this.basicHour*this.payPerHour+this.overHour*this.payPerHour*1.5+this.weeklyHolidayTime*this.payPerHour);
+    }
+
+    public Long calcTotalTaxPay(double taxRate){
+        return (long)Math.floor(this.calcTotalPay()*taxRate);
+    }
+
+    public Long calcBasicPay(){
+        return this.basicHour * this.payPerHour;
+    }
+
+    public Long calcOverPay(double overTimeRate){
+        return (long)(this.overHour * this.payPerHour * overTimeRate);
+    }
+
+    public Long calcWeeklyHolidayPay(){
+        return this.weeklyHolidayTime * this.payPerHour;
+    }
+
     @Builder
     public PayStub(WorkPlaceEmployee workPlaceEmployee, Boolean status, Long payPerHour,
         Long basicHour,

@@ -1,5 +1,6 @@
 package com.project.hana_on_and_on_channel_server.paper.repository;
 
+import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.projection.EmploymentContractSummary;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -7,8 +8,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface EmploymentContractRepository extends JpaRepository<EmploymentContract, Long> {
+
+    Optional<EmploymentContract> findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(WorkPlaceEmployee workPlaceEmployee);
 
     @Query(
             value = "SELECT EC.EMPLOYMENT_CONTRACT_ID AS employmentContractId, " +
