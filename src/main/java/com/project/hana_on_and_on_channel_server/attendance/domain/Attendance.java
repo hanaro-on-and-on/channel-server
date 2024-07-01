@@ -1,15 +1,11 @@
 package com.project.hana_on_and_on_channel_server.attendance.domain;
 
+import com.project.hana_on_and_on_channel_server.attendance.domain.enumType.AttendanceType;
+import com.project.hana_on_and_on_channel_server.attendance.exception.AttendanceDuplicatedException;
 import com.project.hana_on_and_on_channel_server.common.domain.BaseEntity;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -30,7 +26,8 @@ public class Attendance extends BaseEntity {
     private WorkPlaceEmployee workPlaceEmployee;
 
     @Column(nullable = false)
-    private String attendanceType;
+    @Enumerated(EnumType.STRING)
+    private AttendanceType attendanceType;
 
     @Column(nullable = false)
     private Long payPerHour;
@@ -44,14 +41,28 @@ public class Attendance extends BaseEntity {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
-    @Column(nullable = false)
     private LocalDateTime realStartTime;
 
-    @Column(nullable = false)
     private LocalDateTime realEndTime;
 
+    public void checkIn(LocalDateTime realStartTime) {
+        // 이미 출석 했을 경우 예외 처리
+        if(this.attendanceType == AttendanceType.REAL || this.realStartTime != null) throw new AttendanceDuplicatedException();
+        this.realStartTime = realStartTime;
+    }
+
+    public void checkOut(LocalDateTime realEndTime) {
+        // 이미 출석 했을 경우 예외 처리
+        if(this.attendanceType == AttendanceType.REAL || this.realEndTime != null) throw new AttendanceDuplicatedException();
+        this.realEndTime = realEndTime;
+    }
+
+    public void updateAttendanceType(AttendanceType attendanceType) {
+        this.attendanceType = attendanceType;
+    }
+
     @Builder
-    public Attendance(WorkPlaceEmployee workPlaceEmployee, String attendanceType, Long payPerHour,
+    public Attendance(WorkPlaceEmployee workPlaceEmployee, AttendanceType attendanceType, Long payPerHour,
                       String attendDate,LocalDateTime startTime, LocalDateTime endTime, LocalDateTime realStartTime,
                       LocalDateTime realEndTime) {
         this.workPlaceEmployee = workPlaceEmployee;
