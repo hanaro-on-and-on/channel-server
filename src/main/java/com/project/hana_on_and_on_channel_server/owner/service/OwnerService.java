@@ -2,7 +2,6 @@ package com.project.hana_on_and_on_channel_server.owner.service;
 
 import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
-import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeSalaryListGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
@@ -18,9 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService.calculateDailyPayment;
 
@@ -89,7 +88,7 @@ public class OwnerService {
         String searchDate = String.format("%04d%02d", year, month);
 
         // workplace의 employee별로 attendance 모두 찾기
-        List<OwnerSalaryGetResponse> ownerSalaryGetResponseList = new ArrayList<>();
+        List<OwnerSalaryEmployeeGetResponse> ownerSalaryEmployeeGetResponseList = new ArrayList<>();
 
         List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceId(workPlaceId);
 
@@ -102,8 +101,8 @@ public class OwnerService {
                     .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour()))
                     .sum();
 
-            ownerSalaryGetResponseList.add(
-                    new OwnerSalaryGetResponse(
+            ownerSalaryEmployeeGetResponseList.add(
+                    new OwnerSalaryEmployeeGetResponse(
                             workPlaceEmployee.getWorkPlaceEmployeeId(),
                             workPlaceEmployee.getEmployee().getEmployeeNm(),
                             workPlaceEmployee.getWorkStartDate(),
@@ -113,10 +112,89 @@ public class OwnerService {
         }
 
         // workplace의 totalPayment 계산
-        Integer totalPayment = ownerSalaryGetResponseList.stream()
-                .mapToInt(OwnerSalaryGetResponse::payment)
+        Integer totalPayment = ownerSalaryEmployeeGetResponseList.stream()
+                .mapToInt(OwnerSalaryEmployeeGetResponse::payment)
                 .sum();
 
-        return OwnerSalaryEmployeeListGetResponse.fromEntity(workPlaceId, workPlace.getWorkPlaceNm(), workPlace.getColorType(), totalPayment, ownerSalaryGetResponseList);
+        return OwnerSalaryEmployeeListGetResponse.fromEntity(workPlaceId, workPlace.getWorkPlaceNm(), workPlace.getColorType(), totalPayment, ownerSalaryEmployeeGetResponseList);
+    }
+
+    @Transactional(readOnly = true)
+    public OwnerSalaryCalendarWorkPlaceListGetResponse getCalendarSalaries(Long userId, Integer year, Integer month) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        String yesterDate = String.format("%04d%02d%02d", yesterday.getYear(), yesterday.getMonthValue(), yesterday.getDayOfMonth());
+        Integer currentPayment = 0;
+        Integer totalPayment = 0;
+
+        // workplace의 employee별로 attendance 모두 찾기
+        List<WorkPlace> workPlaceList = workPlaceRepository.findByOwnerOwnerId(owner.getOwnerId());
+
+        List<OwnerSalaryCalendarEmployeeListGetResponse> ownerSalaryCalendarEmployeeListGetResponseList = new ArrayList<>();
+
+        for (WorkPlace workPlace : workPlaceList) {
+            List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceId(workPlace.getWorkPlaceId());
+
+            Map<String, List<OwnerSalaryCalendarEmployeeGetResponse>> dailyEmployeeResponses = new HashMap<>();
+
+            for (int day = 1; day <= LocalDate.of(year, month, 1).lengthOfMonth(); day++) {
+                String searchDate = String.format("%04d%02d%02d", year, month, day);
+
+                for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
+                    Attendance attendance = attendanceRepository.findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(workPlaceEmployee.getWorkPlaceEmployeeId(), searchDate)
+                            .orElse(null);
+                    if (attendance == null) {
+                        continue;
+                    }
+
+                    int payment = calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour());
+                    OwnerSalaryCalendarEmployeeGetResponse employeeResponse = new OwnerSalaryCalendarEmployeeGetResponse(
+                            attendance.getAttendanceId(),
+                            workPlaceEmployee.getEmployee().getEmployeeNm(),
+                            attendance.getStartTime(),
+                            attendance.getEndTime(),
+                            attendance.getRestMinute(),
+                            payment
+                    );
+
+                    dailyEmployeeResponses.computeIfAbsent(searchDate, k -> new ArrayList<>())
+                            .add(employeeResponse);
+                }
+            }
+
+            for (Map.Entry<String, List<OwnerSalaryCalendarEmployeeGetResponse>> entry : dailyEmployeeResponses.entrySet()) {
+                String attendDate = entry.getKey();
+                List<OwnerSalaryCalendarEmployeeGetResponse> employeeResponses = entry.getValue();
+
+                int workPlacePayment = employeeResponses.stream()
+                        .mapToInt(OwnerSalaryCalendarEmployeeGetResponse::payment)
+                        .sum();
+
+                if (attendDate.compareTo(yesterDate) <= 0) {    // 1일~어제 까지
+                    currentPayment += workPlacePayment;
+                }
+                totalPayment += workPlacePayment;
+
+                ownerSalaryCalendarEmployeeListGetResponseList.add(new OwnerSalaryCalendarEmployeeListGetResponse(
+                        workPlace.getWorkPlaceNm(),
+                        workPlace.getColorType().getCode(),
+                        attendDate,
+                        workPlacePayment,
+                        employeeResponses.size(),
+                        employeeResponses
+                ));
+            }
+        }
+
+        // attendDate 순 정렬
+        Collections.sort(ownerSalaryCalendarEmployeeListGetResponseList, Comparator.comparing(OwnerSalaryCalendarEmployeeListGetResponse::attendDate));
+
+        return OwnerSalaryCalendarWorkPlaceListGetResponse.fromEntity(
+                currentPayment,
+                totalPayment,
+                ownerSalaryCalendarEmployeeListGetResponseList
+        );
     }
 }

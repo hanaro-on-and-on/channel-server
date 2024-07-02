@@ -207,11 +207,11 @@ public class EmployeeService {
         // year + month => yyyymm
         String searchDate = String.format("%04d%02d", year, month);
 
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        String yesterDate = String.format("%04d%02d%02d", yesterday.getYear(), yesterday.getMonthValue(), yesterday.getDayOfMonth());
-
         // attendance + CustomAttendanceMemo
         List<EmployeeSalaryCalendarGetResponse> employeeSalaryCalendarGetResponseList = new ArrayList<>();
+
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        String yesterDate = String.format("%04d%02d%02d", yesterday.getYear(), yesterday.getMonthValue(), yesterday.getDayOfMonth());
         Integer connectedCurrentPayment = 0;
         Integer connectedTotalPayment = 0;
         Integer notConnectedCurrentPayment = 0;
