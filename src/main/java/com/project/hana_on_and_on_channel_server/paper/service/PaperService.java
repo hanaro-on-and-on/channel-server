@@ -1,6 +1,7 @@
 package com.project.hana_on_and_on_channel_server.paper.service;
 
 import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
+import com.project.hana_on_and_on_channel_server.attendance.domain.enumType.AttendanceType;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomAttendanceMemo;
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
@@ -104,7 +105,7 @@ public class PaperService {
             String searchMonth = String.format("%d%02d", year, month);
             List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendanceTypeAndAttendDateStartingWith(
                     workPlaceEmployee,
-                    "REAL",
+                    AttendanceType.REAL,
                     searchMonth
             );
 
@@ -216,7 +217,7 @@ public class PaperService {
 
         List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendanceTypeAndAttendDateStartingWith(
                 workPlaceEmployee,
-                "REAL",
+                AttendanceType.REAL,
                 searchMonth
         );
 

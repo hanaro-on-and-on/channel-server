@@ -179,7 +179,7 @@ public class OwnerService {
 
                 ownerSalaryCalendarEmployeeListGetResponseList.add(new OwnerSalaryCalendarEmployeeListGetResponse(
                         workPlace.getWorkPlaceNm(),
-                        workPlace.getColorType(),
+                        workPlace.getColorType().getCode(),
                         attendDate,
                         workPlacePayment,
                         employeeResponses.size(),
