@@ -31,4 +31,10 @@ public class OwnerWorkPlaceController {
         OwnerNotificationListGetResponse response = ownerService.getNotificationList(userId, workPlaceId);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{workPlaceId}/notifications")
+    public ResponseEntity<OwnerNotificationSaveResponse> saveNotification(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceId, @RequestBody OwnerNotificationSaveRequest dto) {
+        OwnerNotificationSaveResponse response = ownerService.saveNotification(userId, workPlaceId, dto);
+        return ResponseEntity.ok(response);
+    }
 }

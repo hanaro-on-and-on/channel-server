@@ -100,6 +100,26 @@ public class OwnerService {
         return new OwnerNotificationListGetResponse(ownerWorkPlaceGetResponseList);
     }
 
+    @Transactional
+    public OwnerNotificationSaveResponse saveNotification(Long userId, Long workPlaceId, OwnerNotificationSaveRequest dto) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        WorkPlace workPlace = workPlaceRepository.findById(workPlaceId)
+                .orElseThrow(WorkPlaceNotFoundException::new);
+
+        // TODO owner가 소유한 workPlace가 맞는지 검증
+
+        Notification notification = notificationRepository.save(Notification.builder()
+                .title(dto.title())
+                .content(dto.content())
+                .workPlace(workPlace)
+                .build()
+        );
+
+        return OwnerNotificationSaveResponse.fromEntity(notification);
+    }
+
     @Transactional(readOnly = true)
     public OwnerSalaryWorkPlaceListGetResponse getSalaries(Long userId, Integer year, Integer month) {
         // owner 존재 여부 확인

@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
-//    List<Notification> findByWorkPlace(WorkPlace workPlace);
     List<Notification> findByWorkPlaceWorkPlaceId(Long workPlaceId);
     List<Notification> findByWorkPlaceOrderByCreatedAtDesc(WorkPlace workPlace);
 }
