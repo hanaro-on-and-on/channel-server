@@ -30,5 +30,5 @@ public interface EmploymentContractRepository extends JpaRepository<EmploymentCo
             nativeQuery = true
     )
     List<EmploymentContractSummary> findEmploymentContractList(@Param("userId") Long userId);
-
+    List<EmploymentContract> findByEmployeePhoneAndEmployeeSign(String employeePhone, Boolean employeeSign);
 }

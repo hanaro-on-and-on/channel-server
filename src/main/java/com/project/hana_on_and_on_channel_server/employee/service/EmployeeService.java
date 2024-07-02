@@ -22,6 +22,7 @@ import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFou
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
+import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ import static com.project.hana_on_and_on_channel_server.attendance.service.Atten
 @RequiredArgsConstructor
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
-    private final EmploymentContractsRepository employmentContractsRepository;
+    private final EmploymentContractRepository employmentContractRepository;
     private final CustomWorkPlaceRepository customWorkPlaceRepository;
     private final WorkPlaceEmployeeRepository workPlaceEmployeeRepository;
     private final AttendanceRepository attendanceRepository;
@@ -50,10 +51,10 @@ public class EmployeeService {
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
         // 1. 초대된 사업장 : 휴대폰 번호로, 전자서명 안 된 계약서 찾기
-        List<EmploymentContract> employmentContractList = employmentContractsRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
+        List<EmploymentContract> employmentContractList = employmentContractRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
         List<EmployeeWorkPlaceGetResponse> invitatedWorkPlaceGetResponseList = employmentContractList.stream()
-                .map(contract -> {
-                    WorkPlaceEmployee workPlaceEmployee = contract.getWorkPlaceEmployee();
+                .map(employmentContract -> {
+                    WorkPlaceEmployee workPlaceEmployee = employmentContract.getWorkPlaceEmployee();
                     if (workPlaceEmployee == null) {
                         throw new WorkPlaceEmployeeNotFoundException();
                     }
@@ -68,6 +69,7 @@ public class EmployeeService {
                     return new EmployeeWorkPlaceGetResponse(
                             workPlaceEmployee.getDeletedYn(),
                             userId,
+                            employmentContract.getEmploymentContractId(),
                             workPlace.getWorkPlaceNm(),
                             workPlace.getColorType(),
                             owner.getOwnerNm()
@@ -90,6 +92,7 @@ public class EmployeeService {
                     return new EmployeeWorkPlaceGetResponse(
                             workPlaceEmployee.getDeletedYn(),
                             userId,
+                            null,
                             workPlace.getWorkPlaceNm(),
                             workPlace.getColorType(),
                             owner.getOwnerNm()
@@ -104,6 +107,7 @@ public class EmployeeService {
                     return new EmployeeWorkPlaceGetResponse(
                             false,
                             userId,
+                            null,
                             customWorkPlace.getCustomWorkPlaceNm(),
                             customWorkPlace.getColorType(),
                             null
