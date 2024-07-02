@@ -1,7 +1,6 @@
 package com.project.hana_on_and_on_channel_server.attendance.dto;
 
 import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
-import com.project.hana_on_and_on_channel_server.owner.dto.NotificationGetResponse;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.domain.WorkTime;
 import com.project.hana_on_and_on_channel_server.paper.dto.WorkTimeGetResponse;
