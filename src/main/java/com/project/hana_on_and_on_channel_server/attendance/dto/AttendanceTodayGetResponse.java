@@ -21,7 +21,7 @@ public record AttendanceTodayGetResponse(
         return new AttendanceTodayGetResponse(
                 employmentContract.getWorkPlaceEmployee().getWorkPlaceEmployeeId(),
                 employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceNm(),
-                employmentContract.getWorkPlaceEmployee().getWorkPlace().getColorType().toString(),
+                employmentContract.getWorkPlaceEmployee().getWorkPlace().getColorType().getCode(),
                 workTime,
                 notification
         );

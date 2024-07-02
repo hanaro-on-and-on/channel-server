@@ -94,7 +94,6 @@ public class AttendanceService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public AttendanceTodayListGetResponse getTodayAttendanceList(Long userId){
-        // TODO colorCode
         String dayOfWeek = localDateTimeToTodayOfWeekFormat(LocalDateTime.now());
 
         List<Long> latestEmploymentContractList = attendanceRepository.findLatestEmploymentContractList(userId);

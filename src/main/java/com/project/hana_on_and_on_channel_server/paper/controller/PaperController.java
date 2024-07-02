@@ -1,5 +1,6 @@
 package com.project.hana_on_and_on_channel_server.paper.controller;
 
+import com.project.hana_on_and_on_channel_server.paper.dto.PaperWorkPlaceGetResponse;
 import com.project.hana_on_and_on_channel_server.paper.dto.*;
 import com.project.hana_on_and_on_channel_server.paper.service.PaperService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,18 @@ public class PaperController {
     @GetMapping("/employment-contracts/{employmentContractId}/e-sign")
     public ResponseEntity<EmployeeAndWorkPlaceEmployeeConnectResponse> signEmploymentContractAndConnectEmployeeToWorkPlace(@AuthenticationPrincipal Long userId, @PathVariable Long employmentContractId){
         EmployeeAndWorkPlaceEmployeeConnectResponse response = paperService.signEmploymentContractAndConnectEmployeeToWorkPlace(userId, employmentContractId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{workPlaceEmployeeId}")
+    public ResponseEntity<PaperWorkPlaceGetResponse> findWorkPlace(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceEmployeeId){
+        PaperWorkPlaceGetResponse response = paperService.findWorkPlace(userId, workPlaceEmployeeId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/custom/{customWorkPlaceId}")
+    public ResponseEntity<PaperCustomWorkPlaceGetResponse> findCustomWorkPlace(@AuthenticationPrincipal Long userId, @PathVariable Long customWorkPlaceId){
+        PaperCustomWorkPlaceGetResponse response = paperService.findCustomWorkPlace(userId, customWorkPlaceId);
         return ResponseEntity.ok(response);
     }
 
