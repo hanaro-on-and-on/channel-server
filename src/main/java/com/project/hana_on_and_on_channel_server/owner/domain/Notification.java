@@ -3,6 +3,7 @@ package com.project.hana_on_and_on_channel_server.owner.domain;
 import com.project.hana_on_and_on_channel_server.common.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -25,4 +26,11 @@ public class Notification extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "work_place_id")
     private WorkPlace workPlace;
+
+    @Builder
+    public Notification(String title, String content, WorkPlace workPlace) {
+        this.title = title;
+        this.content = content;
+        this.workPlace = workPlace;
+    }
 }

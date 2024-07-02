@@ -11,7 +11,7 @@ import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotF
 import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
-import com.project.hana_on_and_on_channel_server.owner.dto.NotificationGetResponse;
+import com.project.hana_on_and_on_channel_server.attendance.dto.NotificationGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
@@ -113,7 +113,7 @@ public class AttendanceService {
                 .filter(employmentContract -> workTimeRepository.existsByEmploymentContractAndWorkDayOfWeek(employmentContract, dayOfWeek))
                 .map(employmentContract -> {
                     List<WorkTime> workTimeList = workTimeRepository.findByEmploymentContract(employmentContract);
-                    List<Notification> notificationList = notificationRepository.findByWorkPlace(employmentContract.getWorkPlaceEmployee().getWorkPlace());
+                    List<Notification> notificationList = notificationRepository.findByWorkPlaceWorkPlaceId(employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceId());
                     return AttendanceTodayGetResponse.fromEntity(employmentContract, workTimeList, notificationList);
                 })
                 .collect(Collectors.toList());
