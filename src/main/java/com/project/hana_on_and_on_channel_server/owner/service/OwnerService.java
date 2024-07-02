@@ -1,12 +1,14 @@
 package com.project.hana_on_and_on_channel_server.owner.service;
 
 import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
+import com.project.hana_on_and_on_channel_server.attendance.exception.AttendanceNotFoundException;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.dto.*;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerDuplicatedException;
+import com.project.hana_on_and_on_channel_server.owner.exception.OwnerInvalidException;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.OwnerRepository;
@@ -196,5 +198,21 @@ public class OwnerService {
                 totalPayment,
                 ownerSalaryCalendarEmployeeListGetResponseList
         );
+    }
+
+    @Transactional(readOnly = true)
+    public OwnerAttendanceGetResponse findAttendance(Long userId, Long attendanceId){
+        Owner owner = ownerRepository.findByUserId(userId)
+                .orElseThrow(OwnerNotFoundException::new);
+
+        Attendance attendance = attendanceRepository.findById(attendanceId)
+                .orElseThrow(AttendanceNotFoundException::new);
+
+        // 사용자 검증
+        if(userId != attendance.getWorkPlaceEmployee().getWorkPlace().getOwner().getUserId()){
+            throw new OwnerInvalidException(userId);
+        }
+
+        return OwnerAttendanceGetResponse.fromEntity(attendance);
     }
 }
