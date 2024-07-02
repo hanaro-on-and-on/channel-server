@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/attendance")
+@RequestMapping("/api/v1/attendances")
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
@@ -29,6 +29,12 @@ public class AttendanceController {
     @GetMapping("/today")
     public ResponseEntity<AttendanceTodayListGetResponse> getTodayAttendanceList(@AuthenticationPrincipal Long userId){
         AttendanceTodayListGetResponse response = attendanceService.getTodayAttendanceList(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{workPlaceEmployeeId}")
+    public ResponseEntity<AttendanceWorkPlaceGetResponse> getWorkPlace(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceEmployeeId){
+        AttendanceWorkPlaceGetResponse response = attendanceService.getWorkPlace(userId, workPlaceEmployeeId);
         return ResponseEntity.ok(response);
     }
 }
