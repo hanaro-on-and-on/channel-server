@@ -8,8 +8,9 @@ import java.time.LocalDateTime;
 
 public record EmployeeSalaryCalendarGetResponse(
         Boolean isConnected,
+        Long id,
         String workPlaceName,
-        ColorType workPlaceColor,
+        String workPlaceColorCode,
         String attendDate,
         AttendanceType attendanceType,
         LocalDateTime startTime,
