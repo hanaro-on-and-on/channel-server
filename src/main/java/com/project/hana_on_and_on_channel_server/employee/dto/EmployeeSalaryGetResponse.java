@@ -8,6 +8,7 @@ public record EmployeeSalaryGetResponse(
         Boolean isQuit,
         String workPlaceName,
         ColorType workPlaceColor,
-        Integer payment
+        Integer payment,
+        Long payStubId
 ) {
 }
