@@ -12,14 +12,18 @@ import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotF
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomAttendanceMemoRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomWorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
+import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
+import com.project.hana_on_and_on_channel_server.owner.dto.OwnerNotificationGetResponse;
+import com.project.hana_on_and_on_channel_server.owner.dto.OwnerNotificationListGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.dto.OwnerSalaryCalendarEmployeeListGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
+import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
@@ -51,6 +55,7 @@ public class EmployeeService {
     private final AttendanceRepository attendanceRepository;
     private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
     private final PayStubRepository payStubRepository;
+    private final NotificationRepository notificationRepository;
 
     @Transactional(readOnly = true)
     public EmployeeWorkPlaceListGetResponse getWorkPlaces(Long userId) {
@@ -137,6 +142,19 @@ public class EmployeeService {
                         .payPerHour(employeeWorkPlaceCustomCreateRequest.payPerHour())
                 .build());
         return EmployeeWorkPlaceCustomCreateResponse.fromEntity(customWorkPlace);
+    }
+
+    @Transactional(readOnly = true)
+    public EmployeeNotificationRecentGetResponse getRecentNotification(Long userId, Long workPlaceId) {
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // TODO employee에 연결된 workPlace가 맞는지 검증
+
+        Notification notification = notificationRepository.findTop1ByWorkPlaceWorkPlaceIdOrderByCreatedAtDesc(workPlaceId)
+                .orElse(null);
+
+        return EmployeeNotificationRecentGetResponse.fromEntity(notification);
     }
 
     @Transactional(readOnly = true)
