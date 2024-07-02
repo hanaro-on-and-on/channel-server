@@ -9,7 +9,7 @@ public record OwnerSalaryEmployeeListGetResponse(
         String workPlaceName,
         ColorType workPlaceColor,
         Integer payment,
-        List<OwnerSalaryGetResponse> ownerSalaryGetResponseList
+        List<OwnerSalaryEmployeeGetResponse> ownerSalaryEmployeeGetResponseList
 ) {
 
     public static OwnerSalaryEmployeeListGetResponse fromEntity(
@@ -17,8 +17,8 @@ public record OwnerSalaryEmployeeListGetResponse(
             String workPlaceName,
             ColorType workPlaceColor,
             Integer payment,
-            List<OwnerSalaryGetResponse> ownerSalaryGetResponseList
+            List<OwnerSalaryEmployeeGetResponse> ownerSalaryEmployeeGetResponseList
     ){
-        return new OwnerSalaryEmployeeListGetResponse(id, workPlaceName, workPlaceColor, payment, ownerSalaryGetResponseList);
+        return new OwnerSalaryEmployeeListGetResponse(id, workPlaceName, workPlaceColor, payment, ownerSalaryEmployeeGetResponseList);
     }
 }

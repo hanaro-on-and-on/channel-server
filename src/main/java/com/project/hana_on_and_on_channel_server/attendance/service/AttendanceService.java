@@ -6,6 +6,7 @@ import com.project.hana_on_and_on_channel_server.attendance.dto.AttendanceCheckI
 import com.project.hana_on_and_on_channel_server.attendance.dto.AttendanceCheckInResponse;
 import com.project.hana_on_and_on_channel_server.attendance.dto.AttendanceCheckOutRequest;
 import com.project.hana_on_and_on_channel_server.attendance.dto.AttendanceCheckOutResponse;
+import com.project.hana_on_and_on_channel_server.attendance.exception.AttendanceNotFoundException;
 import com.project.hana_on_and_on_channel_server.attendance.exception.GeoLocationNotFoundException;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
 import com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil;
@@ -37,7 +38,11 @@ public class AttendanceService {
                 .orElseThrow(GeoLocationNotFoundException::new);
         WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(
                 dto.workPlaceEmployeeId()).orElseThrow(WorkPlaceEmployeeNotFoundException::new);
-        Attendance attendance = attendanceRepository.findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(workPlaceEmployee.getWorkPlaceEmployeeId(), LocalDateTimeUtil.localDateTimeToYMDFormat(LocalDateTime.now()));
+        Attendance attendance = attendanceRepository.findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(
+                        workPlaceEmployee.getWorkPlaceEmployeeId(),
+                        LocalDateTimeUtil.localDateTimeToYMDFormat(LocalDateTime.now())
+                )
+                .orElseThrow(() -> new AttendanceNotFoundException());
 
         if (attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 500.0, dto.workPlaceEmployeeId())) {
             attendance.checkIn(LocalDateTime.now());
@@ -56,7 +61,11 @@ public class AttendanceService {
                 .orElseThrow(GeoLocationNotFoundException::new);
         WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(
                 dto.workPlaceEmployeeId()).orElseThrow(WorkPlaceEmployeeNotFoundException::new);
-        Attendance attendance = attendanceRepository.findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(workPlaceEmployee.getWorkPlaceEmployeeId(), LocalDateTimeUtil.localDateTimeToYMDFormat(LocalDateTime.now()));
+        Attendance attendance = attendanceRepository.findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(
+                        workPlaceEmployee.getWorkPlaceEmployeeId(),
+                        LocalDateTimeUtil.localDateTimeToYMDFormat(LocalDateTime.now())
+                )
+                .orElseThrow(() -> new AttendanceNotFoundException());;
 
         if (attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 500.0, dto.workPlaceEmployeeId())) {
             attendance.checkOut(LocalDateTime.now());
