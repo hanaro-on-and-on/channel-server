@@ -16,6 +16,7 @@ import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
+import com.project.hana_on_and_on_channel_server.owner.dto.OwnerSalaryCalendarEmployeeListGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
@@ -31,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService.calculateDailyPayment;
@@ -207,11 +210,11 @@ public class EmployeeService {
         // year + month => yyyymm
         String searchDate = String.format("%04d%02d", year, month);
 
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        String yesterDate = String.format("%04d%02d%02d", yesterday.getYear(), yesterday.getMonthValue(), yesterday.getDayOfMonth());
-
         // attendance + CustomAttendanceMemo
         List<EmployeeSalaryCalendarGetResponse> employeeSalaryCalendarGetResponseList = new ArrayList<>();
+
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        String yesterDate = String.format("%04d%02d%02d", yesterday.getYear(), yesterday.getMonthValue(), yesterday.getDayOfMonth());
         Integer connectedCurrentPayment = 0;
         Integer connectedTotalPayment = 0;
         Integer notConnectedCurrentPayment = 0;
@@ -236,8 +239,9 @@ public class EmployeeService {
                 employeeSalaryCalendarGetResponseList.add(
                         new EmployeeSalaryCalendarGetResponse(
                                 true,
+                                attendance.getAttendanceId(),
                                 workPlaceEmployee.getWorkPlace().getWorkPlaceNm(),
-                                workPlaceEmployee.getColorType(),
+                                workPlaceEmployee.getColorType().getCode(),
                                 attendance.getAttendDate(),
                                 attendanceType,
                                 attendanceType == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
@@ -267,8 +271,9 @@ public class EmployeeService {
                 employeeSalaryCalendarGetResponseList.add(
                         new EmployeeSalaryCalendarGetResponse(
                                 false,
+                                customAttendanceMemo.getCustomAttendanceMemoId(),
                                 customWorkPlace.getCustomWorkPlaceNm(),
-                                customWorkPlace.getColorType(),
+                                customWorkPlace.getColorType().getCode(),
                                 customAttendanceMemo.getAttendDate(),
                                 AttendanceType.EXPECT,
                                 customAttendanceMemo.getStartTime(),
@@ -279,6 +284,9 @@ public class EmployeeService {
                 );
             }
         }
+
+        // attendDate 순 정렬
+        Collections.sort(employeeSalaryCalendarGetResponseList, Comparator.comparing(EmployeeSalaryCalendarGetResponse::attendDate));
 
         return EmployeeSalaryCalendarListGetResponse.fromEntity(
                 connectedCurrentPayment + notConnectedCurrentPayment,
