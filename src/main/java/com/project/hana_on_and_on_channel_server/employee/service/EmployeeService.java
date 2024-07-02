@@ -16,6 +16,7 @@ import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
+import com.project.hana_on_and_on_channel_server.owner.dto.OwnerSalaryCalendarEmployeeListGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
@@ -31,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService.calculateDailyPayment;
@@ -236,7 +239,7 @@ public class EmployeeService {
                 employeeSalaryCalendarGetResponseList.add(
                         new EmployeeSalaryCalendarGetResponse(
                                 true,
-                                workPlaceEmployee.getWorkPlace().getWorkPlaceId(),
+                                attendance.getAttendanceId(),
                                 workPlaceEmployee.getWorkPlace().getWorkPlaceNm(),
                                 workPlaceEmployee.getColorType().getCode(),
                                 attendance.getAttendDate(),
@@ -268,7 +271,7 @@ public class EmployeeService {
                 employeeSalaryCalendarGetResponseList.add(
                         new EmployeeSalaryCalendarGetResponse(
                                 false,
-                                customWorkPlace.getCustomWorkPlaceId(),
+                                customAttendanceMemo.getCustomAttendanceMemoId(),
                                 customWorkPlace.getCustomWorkPlaceNm(),
                                 customWorkPlace.getColorType().getCode(),
                                 customAttendanceMemo.getAttendDate(),
@@ -281,6 +284,9 @@ public class EmployeeService {
                 );
             }
         }
+
+        // attendDate 순 정렬
+        Collections.sort(employeeSalaryCalendarGetResponseList, Comparator.comparing(EmployeeSalaryCalendarGetResponse::attendDate));
 
         return EmployeeSalaryCalendarListGetResponse.fromEntity(
                 connectedCurrentPayment + notConnectedCurrentPayment,
