@@ -7,11 +7,13 @@ import com.project.hana_on_and_on_channel_server.employee.domain.CustomAttendanc
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
 import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
 import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceNotFoundException;
+import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeInvalidException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomAttendanceMemoRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomWorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
+import com.project.hana_on_and_on_channel_server.paper.dto.PaperWorkPlaceGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
@@ -40,6 +42,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil.localDateTimeToYMDDashFormat;
+
 @Service
 @RequiredArgsConstructor
 public class PaperService {
@@ -66,6 +70,32 @@ public class PaperService {
         String workPlaceName = employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceNm();
 
         return EmploymentContractGetResponse.fromEntity(employmentContract, workTimeList, workPlaceName);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public PaperWorkPlaceGetResponse findWorkPlace(Long userId, Long workPlaceEmployeeId){
+        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId)
+                .orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+        EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(workPlaceEmployee)
+                .orElseThrow(EmploymentContractNotFoundException::new);
+
+        //유저 검증
+        if(userId != workPlaceEmployee.getEmployee().getUserId()){
+            throw new EmployeeInvalidException(workPlaceEmployee.getEmployee().getUserId());
+        }
+        return new PaperWorkPlaceGetResponse(workPlaceEmployeeId, workPlaceEmployee.getWorkPlace().getWorkPlaceNm(), workPlaceEmployee.getWorkPlace().getColorType().getCode(), localDateTimeToYMDDashFormat(employmentContract.getWorkStartDate()));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public PaperCustomWorkPlaceGetResponse findCustomWorkPlace(Long userId, Long customWorkPlaceId){
+        CustomWorkPlace customWorkPlace = customWorkPlaceRepository.findById(customWorkPlaceId)
+                .orElseThrow(CustomWorkPlaceNotFoundException::new);
+
+        //유저 검증
+        if(userId != customWorkPlace.getEmployee().getUserId()){
+            throw new EmployeeInvalidException(customWorkPlace.getEmployee().getUserId());
+        }
+        return new PaperCustomWorkPlaceGetResponse(customWorkPlace.getCustomWorkPlaceNm(), customWorkPlace.getColorType().getCode());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
