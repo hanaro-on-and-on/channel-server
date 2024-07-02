@@ -236,8 +236,9 @@ public class EmployeeService {
                 employeeSalaryCalendarGetResponseList.add(
                         new EmployeeSalaryCalendarGetResponse(
                                 true,
+                                workPlaceEmployee.getWorkPlace().getWorkPlaceId(),
                                 workPlaceEmployee.getWorkPlace().getWorkPlaceNm(),
-                                workPlaceEmployee.getColorType(),
+                                workPlaceEmployee.getColorType().getCode(),
                                 attendance.getAttendDate(),
                                 attendanceType,
                                 attendanceType == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
@@ -267,8 +268,9 @@ public class EmployeeService {
                 employeeSalaryCalendarGetResponseList.add(
                         new EmployeeSalaryCalendarGetResponse(
                                 false,
+                                customWorkPlace.getCustomWorkPlaceId(),
                                 customWorkPlace.getCustomWorkPlaceNm(),
-                                customWorkPlace.getColorType(),
+                                customWorkPlace.getColorType().getCode(),
                                 customAttendanceMemo.getAttendDate(),
                                 AttendanceType.EXPECT,
                                 customAttendanceMemo.getStartTime(),
