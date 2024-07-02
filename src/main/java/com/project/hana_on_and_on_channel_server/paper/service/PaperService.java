@@ -108,7 +108,7 @@ public class PaperService {
                     searchMonth
             );
 
-            //기본 시간, 연장 시간
+            //기본 시간, 연장 시간, 주휴시간 계산
             TotalHours totalHours = calcTotalHours(attendanceList);
 
             Long totalPay = totalHours.calcTotalPay(payPerHour);
