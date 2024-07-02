@@ -23,8 +23,11 @@ import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFou
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
+import com.project.hana_on_and_on_channel_server.paper.domain.PayStub;
+import com.project.hana_on_and_on_channel_server.paper.exception.PayStubNotFoundException;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractsRepository;
+import com.project.hana_on_and_on_channel_server.paper.repository.PayStubRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -47,6 +50,7 @@ public class EmployeeService {
     private final WorkPlaceEmployeeRepository workPlaceEmployeeRepository;
     private final AttendanceRepository attendanceRepository;
     private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
+    private final PayStubRepository payStubRepository;
 
     @Transactional(readOnly = true)
     public EmployeeWorkPlaceListGetResponse getWorkPlaces(Long userId) {
@@ -158,6 +162,9 @@ public class EmployeeService {
                     .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour()))
                     .sum();
 
+            PayStub payStub = payStubRepository.findByWorkPlaceEmployeeIdAndYearAndMonth(workPlaceEmployee.getWorkPlaceEmployeeId(), year, month)
+                            .orElse(null);
+
             employeeSalaryGetResponseList.add(
                     new EmployeeSalaryGetResponse(
                             true,
@@ -165,7 +172,8 @@ public class EmployeeService {
                             workPlaceEmployee.getEmployeeStatus() == EmployeeStatus.QUIT,
                             workPlaceEmployee.getWorkPlace().getWorkPlaceNm(),
                             workPlaceEmployee.getColorType(),
-                            payment
+                            payment,
+                            payStub == null ? null : payStub.getPayStubId()
                     )
             );
         }
@@ -189,7 +197,8 @@ public class EmployeeService {
                             customWorkPlace.getEmployeeStatus() == EmployeeStatus.QUIT,
                             customWorkPlace.getCustomWorkPlaceNm(),
                             customWorkPlace.getColorType(),
-                            payment
+                            payment,
+                            null
                     )
             );
         }
