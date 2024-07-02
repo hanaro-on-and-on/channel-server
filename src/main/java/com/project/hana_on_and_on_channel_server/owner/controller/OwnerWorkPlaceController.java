@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/work-place")
-public class WorkPlaceController {
+@RequestMapping("/api/v1/owner/work-place")
+public class OwnerWorkPlaceController {
 
     private final WorkPlaceService workPlaceService;
 
