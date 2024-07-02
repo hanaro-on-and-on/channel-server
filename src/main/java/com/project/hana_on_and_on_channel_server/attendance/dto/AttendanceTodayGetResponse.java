@@ -9,6 +9,7 @@ import com.project.hana_on_and_on_channel_server.paper.dto.WorkTimeGetResponse;
 import java.util.List;
 
 public record AttendanceTodayGetResponse(
+        Long workPlaceEmployeeId,
         String workPlaceName,
         String colorTypeCd,
         List<WorkTimeGetResponse> workTime,
@@ -18,6 +19,7 @@ public record AttendanceTodayGetResponse(
         List<WorkTimeGetResponse> workTime = workTimeList.stream().map(WorkTimeGetResponse::fromEntity).toList();
         List<NotificationGetResponse> notification = notificationList.stream().map(NotificationGetResponse::fromEntity).toList();
         return new AttendanceTodayGetResponse(
+                employmentContract.getWorkPlaceEmployee().getWorkPlaceEmployeeId(),
                 employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceNm(),
                 employmentContract.getWorkPlaceEmployee().getWorkPlace().getColorType().toString(),
                 workTime,
