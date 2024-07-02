@@ -14,9 +14,9 @@ public class EmployeeWorkPlaceController {
 
     private final EmployeeService employeeService;
 
-    @GetMapping("/invitation")
-    public ResponseEntity<EmployeeWorkPlaceInvitationListGetResponse> getWorkPlacesInvitations(@AuthenticationPrincipal Long userId){
-        EmployeeWorkPlaceInvitationListGetResponse response = employeeService.getWorkPlacesInvitations(userId);
+    @GetMapping
+    public ResponseEntity<EmployeeWorkPlaceListGetResponse> getWorkPlaces(@AuthenticationPrincipal Long userId){
+        EmployeeWorkPlaceListGetResponse response = employeeService.getWorkPlaces(userId);
         return ResponseEntity.ok(response);
     }
     

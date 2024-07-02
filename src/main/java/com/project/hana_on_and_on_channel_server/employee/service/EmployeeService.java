@@ -22,6 +22,7 @@ import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFou
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
+import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,12 +30,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService.calculateDailyPayment;
 
@@ -42,23 +39,22 @@ import static com.project.hana_on_and_on_channel_server.attendance.service.Atten
 @RequiredArgsConstructor
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
-    private final EmploymentContractsRepository employmentContractsRepository;
+    private final EmploymentContractRepository employmentContractRepository;
     private final CustomWorkPlaceRepository customWorkPlaceRepository;
     private final WorkPlaceEmployeeRepository workPlaceEmployeeRepository;
     private final AttendanceRepository attendanceRepository;
     private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
 
     @Transactional(readOnly = true)
-    public EmployeeWorkPlaceInvitationListGetResponse getWorkPlacesInvitations(Long userId) {
+    public EmployeeWorkPlaceListGetResponse getWorkPlaces(Long userId) {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
-        // 휴대폰 번호로, 전자서명 안 된 계약서 찾기
-        List<EmploymentContract> employmentContracts = employmentContractsRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
-
-        List<EmployeeWorkPlaceInvitationGetResponse> employeeWorkPlaceInvitationGetResponseList = employmentContracts.stream()
-                .map(contract -> {
-                    WorkPlaceEmployee workPlaceEmployee = contract.getWorkPlaceEmployee();
+        // 1. 초대된 사업장 : 휴대폰 번호로, 전자서명 안 된 계약서 찾기
+        List<EmploymentContract> employmentContractList = employmentContractRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
+        List<EmployeeWorkPlaceGetResponse> invitatedWorkPlaceGetResponseList = employmentContractList.stream()
+                .map(employmentContract -> {
+                    WorkPlaceEmployee workPlaceEmployee = employmentContract.getWorkPlaceEmployee();
                     if (workPlaceEmployee == null) {
                         throw new WorkPlaceEmployeeNotFoundException();
                     }
@@ -70,8 +66,10 @@ public class EmployeeService {
                     if (owner == null) {
                         throw new OwnerNotFoundException();
                     }
-                    return new EmployeeWorkPlaceInvitationGetResponse(
+                    return new EmployeeWorkPlaceGetResponse(
+                            workPlaceEmployee.getDeletedYn(),
                             userId,
+                            employmentContract.getEmploymentContractId(),
                             workPlace.getWorkPlaceNm(),
                             workPlace.getColorType(),
                             owner.getOwnerNm()
@@ -79,7 +77,45 @@ public class EmployeeService {
                 })
                 .toList();
 
-        return EmployeeWorkPlaceInvitationListGetResponse.fromEntity(employeeWorkPlaceInvitationGetResponseList);
+        // 2. 연결된 사업장
+        List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployee(employee);
+        List<EmployeeWorkPlaceGetResponse> connectedWorkPlaceGetResponseList = workPlaceEmployeeList.stream()
+                .map(workPlaceEmployee -> {
+                    WorkPlace workPlace = workPlaceEmployee.getWorkPlace();
+                    if (workPlace == null) {
+                        throw new WorkPlaceNotFoundException();
+                    }
+                    Owner owner = workPlace.getOwner();
+                    if (owner == null) {
+                        throw new OwnerNotFoundException();
+                    }
+                    return new EmployeeWorkPlaceGetResponse(
+                            workPlaceEmployee.getDeletedYn(),
+                            userId,
+                            null,
+                            workPlace.getWorkPlaceNm(),
+                            workPlace.getColorType(),
+                            owner.getOwnerNm()
+                    );
+                })
+                .toList();
+
+        // 3. 수동 사업장
+        List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
+        List<EmployeeWorkPlaceGetResponse> customWorkPlaceGetResponseList = customWorkPlaceList.stream()
+                .map(customWorkPlace -> {
+                    return new EmployeeWorkPlaceGetResponse(
+                            false,
+                            userId,
+                            null,
+                            customWorkPlace.getCustomWorkPlaceNm(),
+                            customWorkPlace.getColorType(),
+                            null
+                    );
+                })
+                .toList();
+
+        return EmployeeWorkPlaceListGetResponse.fromEntity(invitatedWorkPlaceGetResponseList, connectedWorkPlaceGetResponseList, customWorkPlaceGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

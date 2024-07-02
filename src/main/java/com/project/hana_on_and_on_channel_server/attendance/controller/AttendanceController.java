@@ -1,18 +1,11 @@
 package com.project.hana_on_and_on_channel_server.attendance.controller;
 
-import com.project.hana_on_and_on_channel_server.attendance.dto.AttendanceCheckInRequest;
-import com.project.hana_on_and_on_channel_server.attendance.dto.AttendanceCheckInResponse;
-import com.project.hana_on_and_on_channel_server.attendance.dto.AttendanceCheckOutRequest;
-import com.project.hana_on_and_on_channel_server.attendance.dto.AttendanceCheckOutResponse;
+import com.project.hana_on_and_on_channel_server.attendance.dto.*;
 import com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService;
-import com.project.hana_on_and_on_channel_server.owner.dto.WorkPlaceUpsertResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,6 +23,18 @@ public class AttendanceController {
     @PostMapping("/check-out")
     public ResponseEntity<AttendanceCheckOutResponse> saveWorkPlace(@RequestBody AttendanceCheckOutRequest dto) {
         AttendanceCheckOutResponse response = attendanceService.checkOut(dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/today")
+    public ResponseEntity<AttendanceTodayListGetResponse> getTodayAttendanceList(@AuthenticationPrincipal Long userId){
+        AttendanceTodayListGetResponse response = attendanceService.getTodayAttendanceList(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{workPlaceEmployeeId}")
+    public ResponseEntity<AttendanceWorkPlaceGetResponse> getWorkPlace(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceEmployeeId){
+        AttendanceWorkPlaceGetResponse response = attendanceService.getWorkPlace(userId, workPlaceEmployeeId);
         return ResponseEntity.ok(response);
     }
 }
