@@ -5,14 +5,6 @@ import java.util.List;
 public record OwnerSalaryCalendarWorkPlaceListGetResponse(
         Integer currentPayment,
         Integer totalPayment,
-        List<OwnerSalaryCalendarEmployeeListGetResponse> ownerSalaryCalendarEmployeeListGetResponseList
+        List<OwnerSalaryCalendarEmployeeListGetResponse> workPlaceList
 ) {
-
-    public static OwnerSalaryCalendarWorkPlaceListGetResponse fromEntity(
-            Integer currentPayment,
-            Integer totalPayment,
-            List<OwnerSalaryCalendarEmployeeListGetResponse> ownerSalaryCalendarEmployeeListGetResponseList
-    ){
-        return new OwnerSalaryCalendarWorkPlaceListGetResponse(currentPayment, totalPayment, ownerSalaryCalendarEmployeeListGetResponseList);
-    }
 }

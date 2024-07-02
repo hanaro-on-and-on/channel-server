@@ -190,7 +190,7 @@ public class OwnerService {
         // attendDate 순 정렬
         Collections.sort(ownerSalaryCalendarEmployeeListGetResponseList, Comparator.comparing(OwnerSalaryCalendarEmployeeListGetResponse::attendDate));
 
-        return OwnerSalaryCalendarWorkPlaceListGetResponse.fromEntity(
+        return new OwnerSalaryCalendarWorkPlaceListGetResponse(
                 currentPayment,
                 totalPayment,
                 ownerSalaryCalendarEmployeeListGetResponseList
