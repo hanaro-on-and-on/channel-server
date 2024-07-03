@@ -8,7 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity(name="employment_contracts")
 @Getter
@@ -24,7 +24,7 @@ public class EmploymentContract extends BaseEntity {
     private WorkPlaceEmployee workPlaceEmployee; // 알바생_사업장
 
     @Column(name = "work_start_date")
-    private LocalDateTime workStartDate;
+    private LocalDate workStartDate;
 
     @Column(name = "work_site")
     private String workSite;
@@ -73,7 +73,7 @@ public class EmploymentContract extends BaseEntity {
     }
 
     @Builder
-    public EmploymentContract(WorkPlaceEmployee workPlaceEmployee, LocalDateTime workStartDate, String workSite,
+    public EmploymentContract(WorkPlaceEmployee workPlaceEmployee, LocalDate workStartDate, String workSite,
                               String workDetail, Long payPerHour, Long paymentDay, String employeeNm, String employeeAddress,
                               String employeePhone, String restDayOfWeek, Long otherAllowancesAmount, Long bonusAmount,
                               String otherAllowancesName, Long overtimeRate, Boolean ownerSign, Boolean employeeSign) {

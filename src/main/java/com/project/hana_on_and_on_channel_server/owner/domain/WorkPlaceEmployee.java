@@ -6,11 +6,11 @@ import com.project.hana_on_and_on_channel_server.owner.domain.enumType.ColorType
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -18,8 +18,8 @@ import java.time.LocalDateTime;
 @Entity
 public class WorkPlaceEmployee extends BaseEntity {
 
-    @Column(name = "work_place_employee_id")
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long workPlaceEmployeeId;
 
     @Column(name = "employment_status_type_cd")
@@ -44,15 +44,25 @@ public class WorkPlaceEmployee extends BaseEntity {
     @JoinColumn(name = "employee_id")
     private Employee employee;
 
+    private Boolean resignedYn;
+
     public void registerEmployee(Employee employee){
         this.employee=employee;
     }
-
+  
     public Boolean quitEmployee(){
         if (this.employeeStatus == EmployeeStatus.WORKING) {
             this.employeeStatus = EmployeeStatus.QUIT;
             return true;
         }
         return false;
+
+    @Builder
+    public WorkPlaceEmployee(EmployeeStatus employeeStatus, ColorType colorType, LocalDate workStartDate, WorkPlace workPlace) {
+        this.employeeStatus = employeeStatus;
+        this.colorType = colorType;
+        this.workStartDate = workStartDate;
+        this.workPlace = workPlace;
+        this.resignedYn = Boolean.FALSE;
     }
 }
