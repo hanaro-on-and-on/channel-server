@@ -1,5 +1,6 @@
 package com.project.hana_on_and_on_channel_server.owner.controller;
 
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
 import com.project.hana_on_and_on_channel_server.owner.dto.*;
 import com.project.hana_on_and_on_channel_server.owner.service.OwnerService;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,14 @@ public class OwnerWorkPlaceController {
     }
 
     @GetMapping("/employees")
-    public ResponseEntity<OwnerWorkPlaceEmployeeListGetResponse> getEmployeeList(@AuthenticationPrincipal Long userId) {
-        OwnerWorkPlaceEmployeeListGetResponse response = ownerService.getEmployeeList(userId);
+    public ResponseEntity<OwnerWorkPlaceEmployeeListGetResponse> getEmployeeList(@AuthenticationPrincipal Long userId, EmployeeStatus employeeStatus) {
+        OwnerWorkPlaceEmployeeListGetResponse response = ownerService.getEmployeeList(userId, employeeStatus);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("employees/quit")
+    public ResponseEntity<OwnerWorkPlaceEmployeeQuitResponse> quitEmployee(@AuthenticationPrincipal Long userId, @RequestBody OwnerWorkPlaceEmployeeQuitRequest dto) {
+        OwnerWorkPlaceEmployeeQuitResponse response = ownerService.quitEmployee(userId, dto);
         return ResponseEntity.ok(response);
     }
 
@@ -35,6 +42,18 @@ public class OwnerWorkPlaceController {
     @PostMapping("/{workPlaceId}/notifications")
     public ResponseEntity<OwnerNotificationSaveResponse> saveNotification(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceId, @RequestBody OwnerNotificationSaveRequest dto) {
         OwnerNotificationSaveResponse response = ownerService.saveNotification(userId, workPlaceId, dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{workPlaceId}/notifications/{notificationId}")
+    public ResponseEntity<OwnerNotificationEditResponse> editNotification(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceId, @PathVariable Long notificationId, @RequestBody OwnerNotificationEditRequest dto) {
+        OwnerNotificationEditResponse response = ownerService.editNotification(userId, workPlaceId, notificationId, dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{workPlaceId}/notifications/{notificationId}")
+    public ResponseEntity<OwnerNotificationRemoveResponse> removeNotification(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceId, @PathVariable Long notificationId) {
+        OwnerNotificationRemoveResponse response = ownerService.removeNotification(userId, workPlaceId, notificationId);
         return ResponseEntity.ok(response);
     }
 }

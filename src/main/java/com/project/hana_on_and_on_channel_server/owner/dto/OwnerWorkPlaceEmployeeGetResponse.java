@@ -9,13 +9,13 @@ import com.project.hana_on_and_on_channel_server.owner.exception.ColorTypeNotFou
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 
-public record OwnerWorkPlaceGetResponse(
+public record OwnerWorkPlaceEmployeeGetResponse(
         Long workPlaceEmployeeId,
         String workPlaceName,
         String colorTypeCode,
         String employeeName
 ) {
-    public static OwnerWorkPlaceGetResponse fromEntity(WorkPlaceEmployee workPlaceEmployee){
+    public static OwnerWorkPlaceEmployeeGetResponse fromEntity(WorkPlaceEmployee workPlaceEmployee){
         if (workPlaceEmployee == null) {
             throw new WorkPlaceEmployeeNotFoundException();
         }
@@ -31,7 +31,7 @@ public record OwnerWorkPlaceGetResponse(
         if (employee == null) {
             throw new EmployeeNotFoundException();
         }
-        return new OwnerWorkPlaceGetResponse(
+        return new OwnerWorkPlaceEmployeeGetResponse(
                 workPlaceEmployee.getWorkPlaceEmployeeId(),
                 workPlace.getWorkPlaceNm(),
                 colorType.getCode(),

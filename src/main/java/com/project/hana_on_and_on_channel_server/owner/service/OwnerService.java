@@ -4,13 +4,11 @@ import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
 import com.project.hana_on_and_on_channel_server.attendance.domain.enumType.AttendanceType;
 import com.project.hana_on_and_on_channel_server.attendance.exception.AttendanceNotFoundException;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
-import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
-import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountGetResponse;
-import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
 import com.project.hana_on_and_on_channel_server.owner.dto.*;
 import com.project.hana_on_and_on_channel_server.owner.exception.*;
 import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
@@ -49,54 +47,90 @@ public class OwnerService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public OwnerAccountUpsertResponse registerOwnerAccount(Long userId, OwnerAccountUpsertRequest dto) {
+        // 이미 owner 존재 시 가입 X
         ownerRepository.findByUserIdAndAccountNumber(userId, dto.accountNumber()).ifPresent(owner -> {
             throw new OwnerDuplicatedException();
         });
+
         Owner owner = ownerRepository.save(Owner.builder()
             .userId(userId)
             .accountNumber(dto.accountNumber())
             .ownerNm(dto.ownerNm())
             .build());
+
         return OwnerAccountUpsertResponse.fromEntity(owner);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
     public void updateOwnerAccount(Long userId, OwnerAccountUpsertRequest dto) {
-        Owner owner = ownerRepository.findByUserIdAndAccountNumber(userId, dto.accountNumber()).orElseThrow(OwnerNotFoundException::new);
+        // owner가 accountNumber를 가지고 있는지 검증
+        Owner owner = ownerRepository.findByUserIdAndAccountNumber(userId, dto.accountNumber())
+                .orElseThrow(OwnerInvalidException::new);
+
         owner.registerAccountNumber(dto.accountNumber());
     }
 
     @Transactional
     public OwnerWorkPlaceUpsertResponse saveWorkPlace(OwnerWorkPlaceUpsertRequest dto) {
+        // owner 존재 여부 확인
         Owner owner = ownerRepository.findById(dto.ownerId())
                 .orElseThrow(OwnerNotFoundException::new);
-        WorkPlace workPlace = WorkPlace.builder().workPlaceNm(dto.workPlaceNm())
-                .address(dto.address()).location(dto.location().toPoint()).businessRegistrationNumber(dto.businessRegistrationNumber())
-                .openingDate(dto.openingDate()).workPlaceStatus(dto.workPlaceStatus())
-                .workPlaceType(dto.workPlaceType()).colorType(dto.colorType()).owner(owner).build();
 
-        WorkPlace savedWorkPlace = workPlaceRepository.save(workPlace);
+        WorkPlace workPlace = workPlaceRepository.save(WorkPlace.builder()
+                .workPlaceNm(dto.workPlaceNm())
+                .address(dto.address())
+                .location(dto.location().toPoint())
+                .businessRegistrationNumber(dto.businessRegistrationNumber())
+                .openingDate(dto.openingDate())
+                .workPlaceStatus(dto.workPlaceStatus())
+                .workPlaceType(dto.workPlaceType())
+                .colorType(dto.colorType())
+                .owner(owner)
+                .build()
+        );
 
-        return OwnerWorkPlaceUpsertResponse.fromEntity(savedWorkPlace);
+        return OwnerWorkPlaceUpsertResponse.fromEntity(workPlace);
     }
 
     @Transactional(readOnly = true)
-    public OwnerWorkPlaceEmployeeListGetResponse getEmployeeList(Long userId) {
+    public OwnerWorkPlaceEmployeeListGetResponse getEmployeeList(Long userId, EmployeeStatus employeeStatus) {
         // owner 존재 여부 확인
         Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
 
-        List<OwnerWorkPlaceGetResponse> ownerWorkPlaceGetResponseList = new ArrayList<>();
+        List<OwnerWorkPlaceEmployeeGetResponse> ownerWorkPlaceEmployeeGetResponseList = new ArrayList<>();
 
         List<WorkPlace> workPlaceList = workPlaceRepository.findByOwnerOwnerId(owner.getOwnerId());
         for (WorkPlace workPlace : workPlaceList) {
-            List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceId(workPlace.getWorkPlaceId());
+            List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceIdAndEmployeeStatusEquals(workPlace.getWorkPlaceId(), employeeStatus);
             for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
-                ownerWorkPlaceGetResponseList.add(
-                        OwnerWorkPlaceGetResponse.fromEntity(workPlaceEmployee)
+                ownerWorkPlaceEmployeeGetResponseList.add(
+                        OwnerWorkPlaceEmployeeGetResponse.fromEntity(workPlaceEmployee)
                 );
             }
         }
-        return new OwnerWorkPlaceEmployeeListGetResponse(ownerWorkPlaceGetResponseList);
+        return new OwnerWorkPlaceEmployeeListGetResponse(ownerWorkPlaceEmployeeGetResponseList);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public OwnerWorkPlaceEmployeeQuitResponse quitEmployee(Long userId, OwnerWorkPlaceEmployeeQuitRequest dto) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        // workPlaceEmployee 존재 여부 확인
+        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(dto.workPlaceEmployeeId())
+                .orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+        WorkPlace workPlace = workPlaceEmployee.getWorkPlace();
+        if (workPlace == null) {
+            throw new WorkPlaceNotFoundException();
+        }
+
+        // owner가 소유한 workPlace가 맞는지 검증
+        if (owner != workPlace.getOwner()) {
+            throw new WorkPlaceEmployeeInvalidException();
+        }
+
+        Boolean success = workPlaceEmployee.quitEmployee();
+        return new OwnerWorkPlaceEmployeeQuitResponse(success);
     }
 
     @Transactional(readOnly = true)
@@ -104,7 +138,14 @@ public class OwnerService {
         // owner 존재 여부 확인
         Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
 
-        // TODO owner가 소유한 workPlace가 맞는지 검증
+        // workPlace 존재 여부 확인
+        WorkPlace workPlace = workPlaceRepository.findById(workPlaceId)
+                .orElseThrow(WorkPlaceNotFoundException::new);
+
+        // owner가 소유한 workPlace가 맞는지 검증
+        if (owner != workPlace.getOwner()) {
+            throw new WorkPlaceEmployeeInvalidException();
+        }
 
         List<OwnerNotificationGetResponse> ownerWorkPlaceGetResponseList = notificationRepository.findByWorkPlaceWorkPlaceId(workPlaceId).stream()
                 .map(notification -> OwnerNotificationGetResponse.fromEntity(notification))
@@ -118,10 +159,14 @@ public class OwnerService {
         // owner 존재 여부 확인
         Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
 
+        // workPlace 존재 여부 확인
         WorkPlace workPlace = workPlaceRepository.findById(workPlaceId)
                 .orElseThrow(WorkPlaceNotFoundException::new);
 
-        // TODO owner가 소유한 workPlace가 맞는지 검증
+        // owner가 소유한 workPlace가 맞는지 검증
+        if (owner != workPlace.getOwner()) {
+            throw new WorkPlaceEmployeeInvalidException();
+        }
 
         Notification notification = notificationRepository.save(Notification.builder()
                 .title(dto.title())
@@ -131,6 +176,50 @@ public class OwnerService {
         );
 
         return OwnerNotificationSaveResponse.fromEntity(notification);
+    }
+
+    @Transactional
+    public OwnerNotificationEditResponse editNotification(Long userId, Long workPlaceId, Long notificationId, OwnerNotificationEditRequest dto) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        // workPlace 존재 여부 확인
+        WorkPlace workPlace = workPlaceRepository.findById(workPlaceId)
+                .orElseThrow(WorkPlaceNotFoundException::new);
+
+        // owner가 소유한 workPlace가 맞는지 검증
+        if (owner != workPlace.getOwner()) {
+            throw new WorkPlaceEmployeeInvalidException();
+        }
+
+        // notification 존재 여부 확인
+        Notification notification = notificationRepository.findById(notificationId).orElseThrow(NotificationNotFoundException::new);
+
+        Boolean success = notification.update(dto.title(), dto.content());
+
+        return new OwnerNotificationEditResponse(success);
+    }
+
+    @Transactional
+    public OwnerNotificationRemoveResponse removeNotification(Long userId, Long workPlaceId, Long notificationId) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        // workPlace 존재 여부 확인
+        WorkPlace workPlace = workPlaceRepository.findById(workPlaceId)
+                .orElseThrow(WorkPlaceNotFoundException::new);
+
+        // owner가 소유한 workPlace가 맞는지 검증
+        if (owner != workPlace.getOwner()) {
+            throw new WorkPlaceEmployeeInvalidException();
+        }
+
+        // notification 존재 여부 확인
+        Notification notification = notificationRepository.findById(notificationId).orElseThrow(NotificationNotFoundException::new);
+
+        // 삭제
+        notificationRepository.delete(notification);
+        return new OwnerNotificationRemoveResponse(true);
     }
 
     @Transactional(readOnly = true)
@@ -159,11 +248,17 @@ public class OwnerService {
 
     @Transactional(readOnly = true)
     public OwnerSalaryEmployeeListGetResponse getWorkPlaceSalaries(Long userId, Long workPlaceId, Integer year, Integer month) {
-        // owner 일치 여부 확인
-        // TODO owner가 workPlace 소유한게 맞는지 확인
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
 
         // workPlace 존재 여부 확인
-        WorkPlace workPlace = workPlaceRepository.findById(workPlaceId).orElseThrow(WorkPlaceNotFoundException::new);
+        WorkPlace workPlace = workPlaceRepository.findById(workPlaceId)
+                .orElseThrow(WorkPlaceNotFoundException::new);
+
+        // owner가 소유한 workPlace가 맞는지 검증
+        if (owner != workPlace.getOwner()) {
+            throw new WorkPlaceEmployeeInvalidException();
+        }
 
         // year + month => yyyymm
         String searchDate = String.format("%04d%02d", year, month);
@@ -177,8 +272,13 @@ public class OwnerService {
             List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateStartingWith(workPlaceEmployee, searchDate);
 
             int payment = attendanceList.stream()
-                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour()))
-                    .sum();
+                    .mapToInt(attendance -> calculateDailyPayment(
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealEndTime() : attendance.getEndTime(),
+                            attendance.getRestMinute(),
+                            attendance.getPayPerHour()
+                            )
+                    ).sum();
 
             ownerSalaryEmployeeGetResponseList.add(
                     OwnerSalaryEmployeeGetResponse.fromEntity(workPlaceEmployee, payment)
@@ -211,7 +311,7 @@ public class OwnerService {
         for (WorkPlace workPlace : workPlaceList) {
             List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceId(workPlace.getWorkPlaceId());
 
-            Map<String, List<OwnerSalaryCalendarEmployeeGetResponse>> dailyEmployeeResponses = new HashMap<>();
+            Map<String, List<OwnerSalaryCalendarEmployeeGetResponse>> dailyEmployeeResponseList = new HashMap<>();
 
             for (int day = 1; day <= LocalDate.of(year, month, 1).lengthOfMonth(); day++) {
                 String searchDate = String.format("%04d%02d%02d", year, month, day);
@@ -223,42 +323,36 @@ public class OwnerService {
                         continue;
                     }
 
-                    int payment = calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour());
-                    OwnerSalaryCalendarEmployeeGetResponse employeeResponse = new OwnerSalaryCalendarEmployeeGetResponse(
-                            attendance.getAttendanceId(),
-                            workPlaceEmployee.getEmployee().getEmployeeNm(),
-                            attendance.getStartTime(),
-                            attendance.getEndTime(),
+                    int payment = calculateDailyPayment(
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealEndTime() : attendance.getEndTime(),
                             attendance.getRestMinute(),
-                            payment
+                            attendance.getPayPerHour()
                     );
 
-                    dailyEmployeeResponses.computeIfAbsent(searchDate, k -> new ArrayList<>())
-                            .add(employeeResponse);
+                    dailyEmployeeResponseList.computeIfAbsent(searchDate, k -> new ArrayList<>())
+                            .add(
+                                    OwnerSalaryCalendarEmployeeGetResponse.fromEntity(attendance, workPlaceEmployee, payment)
+                            );
                 }
             }
 
-            for (Map.Entry<String, List<OwnerSalaryCalendarEmployeeGetResponse>> entry : dailyEmployeeResponses.entrySet()) {
+            for (Map.Entry<String, List<OwnerSalaryCalendarEmployeeGetResponse>> entry : dailyEmployeeResponseList.entrySet()) {
                 String attendDate = entry.getKey();
-                List<OwnerSalaryCalendarEmployeeGetResponse> employeeResponses = entry.getValue();
+                List<OwnerSalaryCalendarEmployeeGetResponse> employeeResponseList = entry.getValue();
 
-                int workPlacePayment = employeeResponses.stream()
+                int payment = employeeResponseList.stream()
                         .mapToInt(OwnerSalaryCalendarEmployeeGetResponse::payment)
                         .sum();
 
                 if (attendDate.compareTo(yesterDate) <= 0) {    // 1일~어제 까지
-                    currentPayment += workPlacePayment;
+                    currentPayment += payment;
                 }
-                totalPayment += workPlacePayment;
+                totalPayment += payment;
 
-                ownerSalaryCalendarEmployeeListGetResponseList.add(new OwnerSalaryCalendarEmployeeListGetResponse(
-                        workPlace.getWorkPlaceNm(),
-                        workPlace.getColorType().getCode(),
-                        attendDate,
-                        workPlacePayment,
-                        employeeResponses.size(),
-                        employeeResponses
-                ));
+                ownerSalaryCalendarEmployeeListGetResponseList.add(
+                       OwnerSalaryCalendarEmployeeListGetResponse.fromEntity(workPlace, attendDate, payment, employeeResponseList)
+                );
             }
         }
 
@@ -277,6 +371,7 @@ public class OwnerService {
         Owner owner = ownerRepository.findByUserId(userId)
                 .orElseThrow(OwnerNotFoundException::new);
 
+        // attnedance 존재 여부 확인
         Attendance attendance = attendanceRepository.findById(attendanceId)
                 .orElseThrow(AttendanceNotFoundException::new);
 

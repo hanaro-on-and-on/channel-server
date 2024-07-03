@@ -44,11 +44,12 @@ public class CustomAttendanceMemo extends BaseEntity {
     private Integer restMinute;
 
     @Builder
-    public CustomAttendanceMemo(CustomWorkPlace customWorkPlace, Long payPerHour, LocalDateTime startTime,
-        LocalDateTime endTime) {
+    public CustomAttendanceMemo(CustomWorkPlace customWorkPlace, Long payPerHour, String attendDate, LocalDateTime startTime, LocalDateTime endTime, Integer restMinute) {
         this.customWorkPlace = customWorkPlace;
         this.payPerHour = payPerHour;
+        this.attendDate = attendDate;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.restMinute = restMinute;
     }
 }
