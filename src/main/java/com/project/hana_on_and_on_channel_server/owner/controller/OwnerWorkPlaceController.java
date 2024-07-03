@@ -32,6 +32,12 @@ public class OwnerWorkPlaceController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("employees/quit")
+    public ResponseEntity<OwnerWorkPlaceEmployeeQuitResponse> quitEmployee(@AuthenticationPrincipal Long userId, @RequestBody OwnerWorkPlaceEmployeeQuitRequest dto) {
+        OwnerWorkPlaceEmployeeQuitResponse response = ownerService.quitEmployee(userId, dto);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{workPlaceId}/notifications")
     public ResponseEntity<OwnerNotificationListGetResponse> getNotificationList(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceId) {
         OwnerNotificationListGetResponse response = ownerService.getNotificationList(userId, workPlaceId);

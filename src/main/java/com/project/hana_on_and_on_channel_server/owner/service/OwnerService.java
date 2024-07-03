@@ -116,6 +116,20 @@ public class OwnerService {
         return new OwnerWorkPlaceEmployeeQuitListGetResponse(ownerWorkPlaceEmployeeGetResponseList);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
+    public OwnerWorkPlaceEmployeeQuitResponse quitEmployee(Long userId, OwnerWorkPlaceEmployeeQuitRequest dto) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        // TODO owner와 workPlaceEmployee의 연결 확인
+
+        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(dto.workPlaceEmployeeId())
+                .orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+
+        Boolean success = workPlaceEmployee.quitEmployee();
+        return new OwnerWorkPlaceEmployeeQuitResponse(success);
+    }
+
     @Transactional(readOnly = true)
     public OwnerNotificationListGetResponse getNotificationList(Long userId, Long workPlaceId) {
         // owner 존재 여부 확인
