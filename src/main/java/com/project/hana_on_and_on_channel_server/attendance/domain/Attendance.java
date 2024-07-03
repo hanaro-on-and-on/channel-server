@@ -66,7 +66,7 @@ public class Attendance extends BaseEntity {
     @Builder
     public Attendance(WorkPlaceEmployee workPlaceEmployee, AttendanceType attendanceType, Long payPerHour,
                       String attendDate,LocalDateTime startTime, LocalDateTime endTime, LocalDateTime realStartTime,
-                      LocalDateTime realEndTime) {
+                      LocalDateTime realEndTime, Integer restMinute) {
         this.workPlaceEmployee = workPlaceEmployee;
         this.attendanceType = attendanceType;
         this.payPerHour = payPerHour;
@@ -75,5 +75,6 @@ public class Attendance extends BaseEntity {
         this.endTime = endTime;
         this.realStartTime = realStartTime;
         this.realEndTime = realEndTime;
+        this.restMinute = restMinute;
     }
 }
