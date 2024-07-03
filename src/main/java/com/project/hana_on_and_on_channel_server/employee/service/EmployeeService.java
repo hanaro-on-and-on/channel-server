@@ -125,7 +125,7 @@ public class EmployeeService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public EmployeeWorkPlaceCustomCreateResponse createCustomWorkPlaces(Long userId, EmployeeWorkPlaceCustomCreateRequest dto) {
+    public EmployeeWorkPlaceCustomCreateResponse createCustomWorkPlace(Long userId, EmployeeWorkPlaceCustomCreateRequest dto) {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
@@ -136,6 +136,20 @@ public class EmployeeService {
                         .payPerHour(dto.payPerHour())
                 .build());
         return EmployeeWorkPlaceCustomCreateResponse.fromEntity(customWorkPlace);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public EmployeeWorkPlaceCustomQuitReseponse quitCustomWorkPlace(Long userId, Long customWorkPlaceId) {
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // customWorkPlace 존재 여부 확인
+        CustomWorkPlace customWorkPlace = customWorkPlaceRepository.findById(customWorkPlaceId).orElseThrow(CustomWorkPlaceNotFoundException::new);
+
+        // 삭제
+        customWorkPlaceRepository.delete(customWorkPlace);
+
+        return new EmployeeWorkPlaceCustomQuitReseponse(true);
     }
 
     @Transactional(readOnly = true)
