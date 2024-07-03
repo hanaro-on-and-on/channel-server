@@ -7,6 +7,7 @@ import com.project.hana_on_and_on_channel_server.employee.domain.CustomAttendanc
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
 import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
 import com.project.hana_on_and_on_channel_server.employee.dto.*;
+import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeDuplicatedException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomAttendanceMemoRepository;
@@ -33,6 +34,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService.calculateDailyPayment;
+import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil.localDateTimeToYMDFormat;
 
 @Service
 @RequiredArgsConstructor
@@ -84,22 +86,36 @@ public class EmployeeService {
         // 1. 초대된 사업장 : 휴대폰 번호로, 전자서명 안 된 계약서 찾기
         List<EmploymentContract> employmentContractList = employmentContractRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
         List<EmployeeWorkPlaceGetResponse> invitatedWorkPlaceGetResponseList = employmentContractList.stream()
-                .map(employmentContract -> EmployeeWorkPlaceGetResponse.fromEntity(employmentContract, userId))
+                .map(employmentContract -> EmployeeWorkPlaceGetResponse.fromEntity(employmentContract))
                 .toList();
 
         // 2. 연결된 사업장
         List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployee(employee);
         List<EmployeeWorkPlaceGetResponse> connectedWorkPlaceGetResponseList = workPlaceEmployeeList.stream()
-                .map(workPlaceEmployee -> EmployeeWorkPlaceGetResponse.fromEntity(workPlaceEmployee, userId))
+                .map(workPlaceEmployee -> EmployeeWorkPlaceGetResponse.fromEntity(workPlaceEmployee))
                 .toList();
 
         // 3. 수동 사업장
         List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
         List<EmployeeWorkPlaceGetResponse> customWorkPlaceGetResponseList = customWorkPlaceList.stream()
-                .map(customWorkPlace -> EmployeeWorkPlaceGetResponse.fromEntity(customWorkPlace, userId))
+                .map(customWorkPlace -> EmployeeWorkPlaceGetResponse.fromEntity(customWorkPlace))
                 .toList();
 
         return new EmployeeWorkPlaceListGetResponse(invitatedWorkPlaceGetResponseList, connectedWorkPlaceGetResponseList, customWorkPlaceGetResponseList);
+    }
+
+    @Transactional(readOnly = true)
+    public EmployeeWorkPlaceCustomListGetResponse getCustomWorkPlaces(Long userId) {
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // 수동 사업장
+        List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
+        List<EmployeeWorkPlaceGetResponse> customWorkPlaceGetResponseList = customWorkPlaceList.stream()
+                .map(customWorkPlace -> EmployeeWorkPlaceGetResponse.fromEntity(customWorkPlace))
+                .toList();
+
+        return new EmployeeWorkPlaceCustomListGetResponse(customWorkPlaceGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -127,6 +143,31 @@ public class EmployeeService {
                 .orElse(null);
 
         return EmployeeNotificationRecentGetResponse.fromEntity(notification);
+    }
+
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public EmployeeAttendanceCustomCreateResponse saveCustomAttendanceMemo(Long userId, EmployeeAttendanceCustomCreateRequest dto){
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // TODO 연결된 곳이 맞는지 확인
+
+        CustomWorkPlace customWorkPlace = customWorkPlaceRepository.findById(dto.customWorkPlaceId())
+                .orElseThrow(CustomWorkPlaceNotFoundException::new);
+
+        // CustomAttendanceMemo 생성
+        CustomAttendanceMemo customAttendanceMemo = customAttendanceMemoRepository.save(CustomAttendanceMemo.builder()
+                .customWorkPlace(customWorkPlace)
+                .payPerHour(dto.payPerHour())
+                .attendDate(localDateTimeToYMDFormat(dto.startTime()))
+                .startTime(dto.startTime())
+                .endTime(dto.endTime())
+                .restMinute(dto.restMinute())
+                .build()
+        );
+
+        return EmployeeAttendanceCustomCreateResponse.fromEntity(customAttendanceMemo);
     }
 
     @Transactional(readOnly = true)

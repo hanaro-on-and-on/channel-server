@@ -20,6 +20,12 @@ public class EmployeeWorkPlaceController {
         EmployeeWorkPlaceListGetResponse response = employeeService.getWorkPlaces(userId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/custom")
+    public ResponseEntity<EmployeeWorkPlaceCustomListGetResponse> getCustomWorkPlaces(@AuthenticationPrincipal Long userId){
+        EmployeeWorkPlaceCustomListGetResponse response = employeeService.getCustomWorkPlaces(userId);
+        return ResponseEntity.ok(response);
+    }
     
     @PostMapping("/custom")
     public ResponseEntity<EmployeeWorkPlaceCustomCreateResponse> createCustomWorkPlaces(@AuthenticationPrincipal Long userId, @RequestBody EmployeeWorkPlaceCustomCreateRequest employeeWorkPlaceCustomCreateRequest){
