@@ -13,13 +13,8 @@ import com.project.hana_on_and_on_channel_server.employee.repository.CustomAtten
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomWorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
-import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
-import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
-import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
-import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
-import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
@@ -59,69 +54,22 @@ public class EmployeeService {
         // 1. 초대된 사업장 : 휴대폰 번호로, 전자서명 안 된 계약서 찾기
         List<EmploymentContract> employmentContractList = employmentContractRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
         List<EmployeeWorkPlaceGetResponse> invitatedWorkPlaceGetResponseList = employmentContractList.stream()
-                .map(employmentContract -> {
-                    WorkPlaceEmployee workPlaceEmployee = employmentContract.getWorkPlaceEmployee();
-                    if (workPlaceEmployee == null) {
-                        throw new WorkPlaceEmployeeNotFoundException();
-                    }
-                    WorkPlace workPlace = workPlaceEmployee.getWorkPlace();
-                    if (workPlace == null) {
-                        throw new WorkPlaceNotFoundException();
-                    }
-                    Owner owner = workPlace.getOwner();
-                    if (owner == null) {
-                        throw new OwnerNotFoundException();
-                    }
-                    return new EmployeeWorkPlaceGetResponse(
-                            workPlaceEmployee.getDeletedYn(),
-                            userId,
-                            employmentContract.getEmploymentContractId(),
-                            workPlace.getWorkPlaceNm(),
-                            workPlace.getColorType(),
-                            owner.getOwnerNm()
-                    );
-                })
+                .map(employmentContract -> EmployeeWorkPlaceGetResponse.fromEntity(employmentContract, userId))
                 .toList();
 
         // 2. 연결된 사업장
         List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployee(employee);
         List<EmployeeWorkPlaceGetResponse> connectedWorkPlaceGetResponseList = workPlaceEmployeeList.stream()
-                .map(workPlaceEmployee -> {
-                    WorkPlace workPlace = workPlaceEmployee.getWorkPlace();
-                    if (workPlace == null) {
-                        throw new WorkPlaceNotFoundException();
-                    }
-                    Owner owner = workPlace.getOwner();
-                    if (owner == null) {
-                        throw new OwnerNotFoundException();
-                    }
-                    return new EmployeeWorkPlaceGetResponse(
-                            workPlaceEmployee.getDeletedYn(),
-                            userId,
-                            null,
-                            workPlace.getWorkPlaceNm(),
-                            workPlace.getColorType(),
-                            owner.getOwnerNm()
-                    );
-                })
+                .map(workPlaceEmployee -> EmployeeWorkPlaceGetResponse.fromEntity(workPlaceEmployee, userId))
                 .toList();
 
         // 3. 수동 사업장
         List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
         List<EmployeeWorkPlaceGetResponse> customWorkPlaceGetResponseList = customWorkPlaceList.stream()
-                .map(customWorkPlace -> {
-                    return new EmployeeWorkPlaceGetResponse(
-                            false,
-                            userId,
-                            null,
-                            customWorkPlace.getCustomWorkPlaceNm(),
-                            customWorkPlace.getColorType(),
-                            null
-                    );
-                })
+                .map(customWorkPlace -> EmployeeWorkPlaceGetResponse.fromEntity(customWorkPlace, userId))
                 .toList();
 
-        return EmployeeWorkPlaceListGetResponse.fromEntity(invitatedWorkPlaceGetResponseList, connectedWorkPlaceGetResponseList, customWorkPlaceGetResponseList);
+        return new EmployeeWorkPlaceListGetResponse(invitatedWorkPlaceGetResponseList, connectedWorkPlaceGetResponseList, customWorkPlaceGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
