@@ -4,13 +4,11 @@ import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
 import com.project.hana_on_and_on_channel_server.attendance.domain.enumType.AttendanceType;
 import com.project.hana_on_and_on_channel_server.attendance.exception.AttendanceNotFoundException;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
-import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
-import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountGetResponse;
-import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
 import com.project.hana_on_and_on_channel_server.owner.dto.*;
 import com.project.hana_on_and_on_channel_server.owner.exception.*;
 import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
@@ -85,18 +83,37 @@ public class OwnerService {
         // owner 존재 여부 확인
         Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
 
-        List<OwnerWorkPlaceGetResponse> ownerWorkPlaceGetResponseList = new ArrayList<>();
+        List<OwnerWorkPlaceEmployeeGetResponse> ownerWorkPlaceEmployeeGetResponseList = new ArrayList<>();
 
         List<WorkPlace> workPlaceList = workPlaceRepository.findByOwnerOwnerId(owner.getOwnerId());
         for (WorkPlace workPlace : workPlaceList) {
-            List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceId(workPlace.getWorkPlaceId());
+            List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceIdAndEmployeeStatusEquals(workPlace.getWorkPlaceId(), EmployeeStatus.WORKING);
             for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
-                ownerWorkPlaceGetResponseList.add(
-                        OwnerWorkPlaceGetResponse.fromEntity(workPlaceEmployee)
+                ownerWorkPlaceEmployeeGetResponseList.add(
+                        OwnerWorkPlaceEmployeeGetResponse.fromEntity(workPlaceEmployee)
                 );
             }
         }
-        return new OwnerWorkPlaceEmployeeListGetResponse(ownerWorkPlaceGetResponseList);
+        return new OwnerWorkPlaceEmployeeListGetResponse(ownerWorkPlaceEmployeeGetResponseList);
+    }
+
+    @Transactional(readOnly = true)
+    public OwnerWorkPlaceEmployeeQuitListGetResponse getEmployeeQuitList(Long userId) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        List<OwnerWorkPlaceEmployeeGetResponse> ownerWorkPlaceEmployeeGetResponseList = new ArrayList<>();
+
+        List<WorkPlace> workPlaceList = workPlaceRepository.findByOwnerOwnerId(owner.getOwnerId());
+        for (WorkPlace workPlace : workPlaceList) {
+            List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceIdAndEmployeeStatusEquals(workPlace.getWorkPlaceId(), EmployeeStatus.QUIT);
+            for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
+                ownerWorkPlaceEmployeeGetResponseList.add(
+                        OwnerWorkPlaceEmployeeGetResponse.fromEntity(workPlaceEmployee)
+                );
+            }
+        }
+        return new OwnerWorkPlaceEmployeeQuitListGetResponse(ownerWorkPlaceEmployeeGetResponseList);
     }
 
     @Transactional(readOnly = true)
