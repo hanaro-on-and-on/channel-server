@@ -6,6 +6,7 @@ import com.project.hana_on_and_on_channel_server.attendance.repository.Attendanc
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomAttendanceMemo;
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
 import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
+import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceInvalidException;
 import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeInvalidException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
@@ -243,7 +244,7 @@ public class PaperService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public MonthlyAttendanceGetResponse getMonthlyAttendanceGetResponse(Long userId, Long workPlaceEmployeeId, int year, int month){
+    public MonthlyAttendanceGetResponse getMonthlyAttendance(Long userId, Long workPlaceEmployeeId, int year, int month){
         WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId)
                 .orElseThrow(WorkPlaceNotFoundException::new);
         WorkPlace workPlace = workPlaceEmployee.getWorkPlace();
@@ -261,7 +262,22 @@ public class PaperService {
                 searchMonth
         );
 
-        return MonthlyAttendanceGetResponse.fromEntity(workPlace, attendanceList, year, month);
+        return MonthlyAttendanceGetResponse.fromAttendance(workPlace, attendanceList, year, month);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public MonthlyAttendanceGetResponse getMonthlyCustomAttendance(Long userId, Long customWorkPlaceId, int year, int month){
+        CustomWorkPlace customWorkPlace = customWorkPlaceRepository.findById(customWorkPlaceId)
+                .orElseThrow(CustomWorkPlaceNotFoundException::new);
+
+        if(userId != customWorkPlace.getEmployee().getUserId()){
+            throw new CustomWorkPlaceInvalidException(customWorkPlaceId);
+        }
+
+        String searchDate = String.format("%d%02d", year, month);
+        List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAndAttendDateStartingWith(customWorkPlace, searchDate);
+
+        return MonthlyAttendanceGetResponse.fromCustomAttendance(customWorkPlace, customAttendanceMemoList, year, month);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
