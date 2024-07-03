@@ -4,6 +4,9 @@ import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
 import com.project.hana_on_and_on_channel_server.attendance.domain.enumType.AttendanceType;
 import com.project.hana_on_and_on_channel_server.attendance.exception.AttendanceNotFoundException;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
+import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
+import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountGetResponse;
+import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
@@ -35,6 +38,14 @@ public class OwnerService {
     private final AttendanceRepository attendanceRepository;
     private final WorkPlaceRepository workPlaceRepository;
     private final NotificationRepository notificationRepository;
+
+    @Transactional(readOnly = true)
+    public OwnerAccountGetResponse getOwnerAccount(Long userId) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        return OwnerAccountGetResponse.fromEntity(owner);
+    }
 
     @Transactional(propagation = Propagation.REQUIRED)
     public OwnerAccountUpsertResponse registerOwnerAccount(Long userId, OwnerAccountUpsertRequest dto) {

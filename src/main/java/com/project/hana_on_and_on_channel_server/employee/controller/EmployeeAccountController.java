@@ -1,5 +1,6 @@
 package com.project.hana_on_and_on_channel_server.employee.controller;
 
+import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountGetResponse;
 import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountRegRequest;
 import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountUpsertRequest;
 import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountUpsertResponse;
@@ -15,6 +16,12 @@ import org.springframework.web.bind.annotation.*;
 public class EmployeeAccountController {
 
     private final EmployeeService employeeService;
+
+    @GetMapping
+    public ResponseEntity<EmployeeAccountGetResponse> getEmployeeAccount(@AuthenticationPrincipal Long userId){
+        EmployeeAccountGetResponse response = employeeService.getEmployeeAccount(userId);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping
     public ResponseEntity<EmployeeAccountUpsertResponse> registerEmployeeAccount(@AuthenticationPrincipal Long userId, @RequestBody EmployeeAccountRegRequest employeeAccountRegRequest){
