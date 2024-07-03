@@ -22,7 +22,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.domain.WorkTime;
@@ -117,7 +116,7 @@ public class AttendanceService {
                             List<Notification> notificationList = notificationRepository.findByWorkPlaceWorkPlaceId(employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceId());
                             return AttendanceTodayGetResponse.fromEntity(employmentContract, attendance, notificationList);
                         }).stream())
-                .collect(Collectors.toList());
+                .toList();
 
         //이외
         List<AttendanceTotalGetResponse> totalList = employmentContractList.stream()
@@ -126,7 +125,7 @@ public class AttendanceService {
                     List<WorkTime> workTimeList = workTimeRepository.findByEmploymentContract(employmentContract);
                     return AttendanceTotalGetResponse.fromEntity(employmentContract, workTimeList);
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         return new AttendanceTodayListGetResponse(todayList, totalList);
     }
