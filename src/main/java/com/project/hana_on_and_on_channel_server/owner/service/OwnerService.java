@@ -79,7 +79,7 @@ public class OwnerService {
     }
 
     @Transactional(readOnly = true)
-    public OwnerWorkPlaceEmployeeListGetResponse getEmployeeList(Long userId) {
+    public OwnerWorkPlaceEmployeeListGetResponse getEmployeeList(Long userId, EmployeeStatus employeeStatus) {
         // owner 존재 여부 확인
         Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
 
@@ -87,7 +87,7 @@ public class OwnerService {
 
         List<WorkPlace> workPlaceList = workPlaceRepository.findByOwnerOwnerId(owner.getOwnerId());
         for (WorkPlace workPlace : workPlaceList) {
-            List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceIdAndEmployeeStatusEquals(workPlace.getWorkPlaceId(), EmployeeStatus.WORKING);
+            List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceIdAndEmployeeStatusEquals(workPlace.getWorkPlaceId(), employeeStatus);
             for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
                 ownerWorkPlaceEmployeeGetResponseList.add(
                         OwnerWorkPlaceEmployeeGetResponse.fromEntity(workPlaceEmployee)
@@ -95,25 +95,6 @@ public class OwnerService {
             }
         }
         return new OwnerWorkPlaceEmployeeListGetResponse(ownerWorkPlaceEmployeeGetResponseList);
-    }
-
-    @Transactional(readOnly = true)
-    public OwnerWorkPlaceEmployeeQuitListGetResponse getEmployeeQuitList(Long userId) {
-        // owner 존재 여부 확인
-        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
-
-        List<OwnerWorkPlaceEmployeeGetResponse> ownerWorkPlaceEmployeeGetResponseList = new ArrayList<>();
-
-        List<WorkPlace> workPlaceList = workPlaceRepository.findByOwnerOwnerId(owner.getOwnerId());
-        for (WorkPlace workPlace : workPlaceList) {
-            List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceIdAndEmployeeStatusEquals(workPlace.getWorkPlaceId(), EmployeeStatus.QUIT);
-            for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
-                ownerWorkPlaceEmployeeGetResponseList.add(
-                        OwnerWorkPlaceEmployeeGetResponse.fromEntity(workPlaceEmployee)
-                );
-            }
-        }
-        return new OwnerWorkPlaceEmployeeQuitListGetResponse(ownerWorkPlaceEmployeeGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

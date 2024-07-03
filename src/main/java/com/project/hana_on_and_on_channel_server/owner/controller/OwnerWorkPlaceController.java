@@ -1,5 +1,6 @@
 package com.project.hana_on_and_on_channel_server.owner.controller;
 
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
 import com.project.hana_on_and_on_channel_server.owner.dto.*;
 import com.project.hana_on_and_on_channel_server.owner.service.OwnerService;
 import lombok.RequiredArgsConstructor;
@@ -21,14 +22,8 @@ public class OwnerWorkPlaceController {
     }
 
     @GetMapping("/employees")
-    public ResponseEntity<OwnerWorkPlaceEmployeeListGetResponse> getEmployeeList(@AuthenticationPrincipal Long userId) {
-        OwnerWorkPlaceEmployeeListGetResponse response = ownerService.getEmployeeList(userId);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/employees/quit")
-    public ResponseEntity<OwnerWorkPlaceEmployeeQuitListGetResponse> getEmployeeQuitList(@AuthenticationPrincipal Long userId) {
-        OwnerWorkPlaceEmployeeQuitListGetResponse response = ownerService.getEmployeeQuitList(userId);
+    public ResponseEntity<OwnerWorkPlaceEmployeeListGetResponse> getEmployeeList(@AuthenticationPrincipal Long userId, EmployeeStatus employeeStatus) {
+        OwnerWorkPlaceEmployeeListGetResponse response = ownerService.getEmployeeList(userId, employeeStatus);
         return ResponseEntity.ok(response);
     }
 
