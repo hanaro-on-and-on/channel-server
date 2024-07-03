@@ -50,12 +50,13 @@ public class WorkPlaceEmployee extends BaseEntity {
         this.employee=employee;
     }
   
-    public Boolean quitEmployee(){
+    public Boolean quitEmployee() {
         if (this.employeeStatus == EmployeeStatus.WORKING) {
             this.employeeStatus = EmployeeStatus.QUIT;
             return true;
         }
         return false;
+    }
 
     @Builder
     public WorkPlaceEmployee(EmployeeStatus employeeStatus, ColorType colorType, LocalDate workStartDate, WorkPlace workPlace) {

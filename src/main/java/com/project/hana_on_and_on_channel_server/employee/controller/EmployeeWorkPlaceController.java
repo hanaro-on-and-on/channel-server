@@ -28,8 +28,14 @@ public class EmployeeWorkPlaceController {
     }
     
     @PostMapping("/custom")
-    public ResponseEntity<EmployeeWorkPlaceCustomCreateResponse> createCustomWorkPlaces(@AuthenticationPrincipal Long userId, @RequestBody EmployeeWorkPlaceCustomCreateRequest employeeWorkPlaceCustomCreateRequest){
-        EmployeeWorkPlaceCustomCreateResponse response = employeeService.createCustomWorkPlaces(userId, employeeWorkPlaceCustomCreateRequest);
+    public ResponseEntity<EmployeeWorkPlaceCustomCreateResponse> createCustomWorkPlace(@AuthenticationPrincipal Long userId, @RequestBody EmployeeWorkPlaceCustomCreateRequest dto){
+        EmployeeWorkPlaceCustomCreateResponse response = employeeService.createCustomWorkPlace(userId, dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{customWorkPlaceId}/custom")
+    public ResponseEntity<EmployeeWorkPlaceCustomQuitReseponse> quitCustomWorkPlace(@AuthenticationPrincipal Long userId, @PathVariable Long customWorkPlaceId){
+        EmployeeWorkPlaceCustomQuitReseponse response = employeeService.quitCustomWorkPlace(userId, customWorkPlaceId);
         return ResponseEntity.ok(response);
     }
 
