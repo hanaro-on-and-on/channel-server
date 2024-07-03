@@ -2,7 +2,6 @@ package com.project.hana_on_and_on_channel_server.employee.dto;
 
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
 import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceNotFoundException;
-import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
@@ -13,6 +12,7 @@ import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract
 public record EmployeeWorkPlaceGetResponse(
         Boolean isQuit,
         Long employmentContractId,
+        Long customWorkPlaceId,
         String workPlaceName,
         String colorCodeType,
         String ownerName
@@ -38,6 +38,7 @@ public record EmployeeWorkPlaceGetResponse(
         return new EmployeeWorkPlaceGetResponse(
                 workPlaceEmployee.getDeletedYn(),
                 employmentContract.getEmploymentContractId(),
+                null,
                 workPlace.getWorkPlaceNm(),
                 colorType.getCode(),
                 owner.getOwnerNm()
@@ -64,6 +65,7 @@ public record EmployeeWorkPlaceGetResponse(
         return new EmployeeWorkPlaceGetResponse(
                 workPlaceEmployee.getDeletedYn(),
                 null,
+                null,
                 workPlace.getWorkPlaceNm(),
                 colorType.getCode(),
                 owner.getOwnerNm()
@@ -82,6 +84,7 @@ public record EmployeeWorkPlaceGetResponse(
         return new EmployeeWorkPlaceGetResponse(
                 false,
                 null,
+                customWorkPlace.getCustomWorkPlaceId(),
                 customWorkPlace.getCustomWorkPlaceNm(),
                 colorType.getCode(),
                 null

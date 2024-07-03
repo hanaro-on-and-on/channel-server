@@ -104,6 +104,20 @@ public class EmployeeService {
         return new EmployeeWorkPlaceListGetResponse(invitatedWorkPlaceGetResponseList, connectedWorkPlaceGetResponseList, customWorkPlaceGetResponseList);
     }
 
+    @Transactional(readOnly = true)
+    public EmployeeWorkPlaceCustomListGetResponse getCustomWorkPlaces(Long userId) {
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // 수동 사업장
+        List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
+        List<EmployeeWorkPlaceGetResponse> customWorkPlaceGetResponseList = customWorkPlaceList.stream()
+                .map(customWorkPlace -> EmployeeWorkPlaceGetResponse.fromEntity(customWorkPlace))
+                .toList();
+
+        return new EmployeeWorkPlaceCustomListGetResponse(customWorkPlaceGetResponseList);
+    }
+
     @Transactional(propagation = Propagation.REQUIRED)
     public EmployeeWorkPlaceCustomCreateResponse createCustomWorkPlaces(Long userId, EmployeeWorkPlaceCustomCreateRequest employeeWorkPlaceCustomCreateRequest) {
         // employee 존재 여부 확인
