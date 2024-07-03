@@ -220,7 +220,7 @@ public class EmployeeService {
                 .mapToInt(EmployeeSalaryGetResponse::payment)
                 .sum();
 
-        return EmployeeSalaryListGetResponse.fromEntity(year, month, totalPayment, employeeSalaryGetResponseList);
+        return new EmployeeSalaryListGetResponse(year, month, totalPayment, employeeSalaryGetResponseList);
     }
 
     @Transactional(readOnly = true)
