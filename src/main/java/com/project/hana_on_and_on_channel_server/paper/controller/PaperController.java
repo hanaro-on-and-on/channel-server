@@ -59,6 +59,12 @@ public class PaperController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{workPlaceEmployeeId}/attendance")
+    public ResponseEntity<MonthlyAttendanceGetResponse> getMonthlyAttendanceGetResponse(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceEmployeeId, @RequestParam int year, @RequestParam int month){
+        MonthlyAttendanceGetResponse response = paperService.getMonthlyAttendanceGetResponse(userId, workPlaceEmployeeId, year, month);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/custom/{customWorkPlaceId}/pay-stubs")
     public ResponseEntity<MonthlyPayStubGetResponse> getMonthlyPayStubWithCustomAttendance(@AuthenticationPrincipal Long userId, @PathVariable Long customWorkPlaceId, @RequestParam int year, @RequestParam int month){
         MonthlyPayStubGetResponse response = paperService.getMonthlyPayStubWithCustomAttendance(userId, customWorkPlaceId, year, month);
