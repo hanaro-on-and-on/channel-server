@@ -22,10 +22,6 @@ public class CustomWorkPlace extends BaseEntity {
     @JoinColumn(name = "employee_id")
     private Employee employee;
 
-    @Column(name = "employment_status_type_cd")
-    @Enumerated(EnumType.STRING)
-    private EmployeeStatus employeeStatus;
-
     @Column(nullable = false)
     private String customWorkPlaceNm;
 
@@ -37,9 +33,8 @@ public class CustomWorkPlace extends BaseEntity {
     private ColorType colorType;
 
     @Builder
-    public CustomWorkPlace(Employee employee, String customWorkPlaceNm, EmployeeStatus employeeStatus, Long payPerHour) {
+    public CustomWorkPlace(Employee employee, String customWorkPlaceNm, Long payPerHour) {
         this.employee = employee;
-        this.employeeStatus = employeeStatus;
         this.customWorkPlaceNm = customWorkPlaceNm;
         this.payPerHour = payPerHour;
     }

@@ -19,28 +19,17 @@ public record AttendanceTodayGetResponse(
         LocalDateTime realEndTime,
         List<NotificationGetResponse> notice
 ) {
-//    public static AttendanceTodayGetResponse fromEntity(EmploymentContract employmentContract, List<WorkTime> workTimeList, List<Notification> notificationList){
-//        List<WorkTimeGetResponse> workTime = workTimeList.stream().map(WorkTimeGetResponse::fromEntity).toList();
-//        List<NotificationGetResponse> notification = notificationList.stream().map(NotificationGetResponse::fromEntity).toList();
-//        return new AttendanceTodayGetResponse(
-//                employmentContract.getWorkPlaceEmployee().getWorkPlaceEmployeeId(),
-//                employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceNm(),
-//                employmentContract.getWorkPlaceEmployee().getWorkPlace().getColorType().getCode(),
-//                workTime,
-//                notification
-//        );
-//    }
-public static AttendanceTodayGetResponse fromEntity(EmploymentContract employmentContract, Attendance attendance, List<Notification> notificationList){
-    List<NotificationGetResponse> notification = notificationList.stream().map(NotificationGetResponse::fromEntity).toList();
-    return new AttendanceTodayGetResponse(
-            employmentContract.getWorkPlaceEmployee().getWorkPlaceEmployeeId(),
-            employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceNm(),
-            employmentContract.getWorkPlaceEmployee().getWorkPlace().getColorType().getCode(),
-            attendance.getStartTime(),
-            attendance.getEndTime(),
-            attendance.getRealStartTime(),
-            attendance.getRealEndTime(),
-            notification
-    );
-}
+    public static AttendanceTodayGetResponse fromEntity(EmploymentContract employmentContract, Attendance attendance, List<Notification> notificationList) {
+        List<NotificationGetResponse> notification = notificationList.stream().map(NotificationGetResponse::fromEntity).toList();
+        return new AttendanceTodayGetResponse(
+                employmentContract.getWorkPlaceEmployee().getWorkPlaceEmployeeId(),
+                employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceNm(),
+                employmentContract.getWorkPlaceEmployee().getWorkPlace().getColorType().getCode(),
+                attendance.getStartTime(),
+                attendance.getEndTime(),
+                attendance.getRealStartTime(),
+                attendance.getRealEndTime(),
+                notification
+        );
+    }
 }
