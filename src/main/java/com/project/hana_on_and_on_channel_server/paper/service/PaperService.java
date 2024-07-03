@@ -12,7 +12,12 @@ import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotF
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomAttendanceMemoRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomWorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
+import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
+import com.project.hana_on_and_on_channel_server.owner.exception.OwnerInvalidException;
+import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
+import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.paper.dto.PaperWorkPlaceGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
@@ -39,8 +44,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil.localDateTimeToYMDDashFormat;
-
 @Service
 @RequiredArgsConstructor
 public class PaperService {
@@ -52,6 +55,7 @@ public class PaperService {
     private final WorkPlaceEmployeeRepository workPlaceEmployeeRepository;
     private final CustomWorkPlaceRepository customWorkPlaceRepository;
     private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
+    private final WorkPlaceRepository workPlaceRepository;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public List<EmploymentContractListGetResponse> findEmploymentContractList (Long userId){
@@ -80,7 +84,7 @@ public class PaperService {
         if(userId != workPlaceEmployee.getEmployee().getUserId()){
             throw new EmployeeInvalidException(workPlaceEmployee.getEmployee().getUserId());
         }
-        return new PaperWorkPlaceGetResponse(workPlaceEmployeeId, workPlaceEmployee.getWorkPlace().getWorkPlaceNm(), workPlaceEmployee.getWorkPlace().getColorType().getCode(), localDateTimeToYMDDashFormat(employmentContract.getWorkStartDate()));
+        return new PaperWorkPlaceGetResponse(workPlaceEmployeeId, workPlaceEmployee.getWorkPlace().getWorkPlaceNm(), workPlaceEmployee.getWorkPlace().getColorType().getCode(), employmentContract.getWorkStartDate().toString());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -93,6 +97,62 @@ public class PaperService {
             throw new EmployeeInvalidException(customWorkPlace.getEmployee().getUserId());
         }
         return new PaperCustomWorkPlaceGetResponse(customWorkPlace.getCustomWorkPlaceNm(), customWorkPlace.getColorType().getCode());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public EmploymentContractUpsertResponse saveEmploymentContract(Long userId, Long workPlaceId, EmploymentContractUpsertRequest request){
+        WorkPlace workPlace = workPlaceRepository.findById(workPlaceId)
+                .orElseThrow(WorkPlaceNotFoundException::new);
+
+        //해당 사업장의 owner가 아닐 경우 예외처리
+        if(userId != workPlace.getOwner().getUserId()){
+            throw new OwnerInvalidException(userId);
+        }
+
+        // workPlaceEmployee 생성
+        WorkPlaceEmployee workPlaceEmployee = WorkPlaceEmployee.builder()
+                .workPlace(workPlace)
+                .employeeStatus(EmployeeStatus.WORKING)
+                .workStartDate(request.workStartDate())
+                .colorType(workPlace.getColorType())
+                .build();
+
+        // 근로계약서 생성
+        EmploymentContract employmentContract = EmploymentContract.builder()
+                .workPlaceEmployee(workPlaceEmployee)
+                .workStartDate(request.workStartDate()) //TODO LocalDateTime LocalTime 등 맞추기
+                .workSite(request.workSite())
+                .workDetail(request.workDetail())
+                .payPerHour(request.payPerHour())
+                .employeeNm(request.employeeNm())
+                .employeeAddress(request.employeeAddress())
+                .employeePhone(request.employeePhone())
+                .restDayOfWeek(request.restDayOfWeek())
+                .otherAllowancesAmount(request.otherAllowancesAmount())
+                .bonusAmount(request.bonusAmount())
+                .otherAllowancesName(request.otherAllowancesName())
+                .overtimeRate(request.overTimeRate())
+                .ownerSign(Boolean.TRUE)
+                .employeeSign(Boolean.FALSE)
+                .build();
+
+        workPlaceEmployeeRepository.save(workPlaceEmployee);
+        employmentContractRepository.save(employmentContract);
+
+        //근무요일 추가
+        LocalDate today = LocalDate.now();
+        request.workTimes().stream()
+                .map(workTimeRequest -> WorkTime.builder()
+                        .employmentContract(employmentContract)
+                        .workDayOfWeek(workTimeRequest.workDayOfWeek())
+                        .workStartTime(LocalDateTime.of(today, workTimeRequest.workStartTime()))
+                        .workEndTime(LocalDateTime.of(today, workTimeRequest.workEndTime()))
+                        .restStartTime(LocalDateTime.of(today, workTimeRequest.restStartTime()))
+                        .restEndTime(LocalDateTime.of(today, workTimeRequest.restEndTime()))
+                        .build())
+                .forEach(workTime -> workTimeRepository.save(workTime));
+
+        return new EmploymentContractUpsertResponse(employmentContract.getEmploymentContractId(), workPlaceEmployee.getWorkPlaceEmployeeId());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
