@@ -12,14 +12,13 @@ import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract
 
 public record EmployeeWorkPlaceGetResponse(
         Boolean isQuit,
-        Long employeeId,
         Long employmentContractId,
         String workPlaceName,
         String colorCodeType,
         String ownerName
 ) {
     // 초대된 사업장
-    public static EmployeeWorkPlaceGetResponse fromEntity(EmploymentContract employmentContract, Long userId){
+    public static EmployeeWorkPlaceGetResponse fromEntity(EmploymentContract employmentContract){
         WorkPlaceEmployee workPlaceEmployee = employmentContract.getWorkPlaceEmployee();
         if (workPlaceEmployee == null) {
             throw new WorkPlaceEmployeeNotFoundException();
@@ -38,7 +37,6 @@ public record EmployeeWorkPlaceGetResponse(
         }
         return new EmployeeWorkPlaceGetResponse(
                 workPlaceEmployee.getDeletedYn(),
-                userId,
                 employmentContract.getEmploymentContractId(),
                 workPlace.getWorkPlaceNm(),
                 colorType.getCode(),
@@ -47,7 +45,7 @@ public record EmployeeWorkPlaceGetResponse(
     }
 
     // 연결된 사업장
-    public static EmployeeWorkPlaceGetResponse fromEntity(WorkPlaceEmployee workPlaceEmployee, Long userId){
+    public static EmployeeWorkPlaceGetResponse fromEntity(WorkPlaceEmployee workPlaceEmployee){
         if (workPlaceEmployee == null) {
             throw new WorkPlaceEmployeeNotFoundException();
         }
@@ -65,7 +63,6 @@ public record EmployeeWorkPlaceGetResponse(
         }
         return new EmployeeWorkPlaceGetResponse(
                 workPlaceEmployee.getDeletedYn(),
-                userId,
                 null,
                 workPlace.getWorkPlaceNm(),
                 colorType.getCode(),
@@ -74,7 +71,7 @@ public record EmployeeWorkPlaceGetResponse(
     }
 
     // 수동 사업장
-    public static EmployeeWorkPlaceGetResponse fromEntity(CustomWorkPlace customWorkPlace, Long userId){
+    public static EmployeeWorkPlaceGetResponse fromEntity(CustomWorkPlace customWorkPlace){
         if (customWorkPlace == null) {
             throw new CustomWorkPlaceNotFoundException();
         }
@@ -84,7 +81,6 @@ public record EmployeeWorkPlaceGetResponse(
         }
         return new EmployeeWorkPlaceGetResponse(
                 false,
-                userId,
                 null,
                 customWorkPlace.getCustomWorkPlaceNm(),
                 colorType.getCode(),
