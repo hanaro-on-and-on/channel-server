@@ -1,15 +1,15 @@
 package com.project.hana_on_and_on_channel_server.owner.service;
 
 import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
+import com.project.hana_on_and_on_channel_server.attendance.domain.enumType.AttendanceType;
+import com.project.hana_on_and_on_channel_server.attendance.exception.AttendanceNotFoundException;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
 import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.dto.*;
-import com.project.hana_on_and_on_channel_server.owner.exception.OwnerDuplicatedException;
-import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
-import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
+import com.project.hana_on_and_on_channel_server.owner.exception.*;
 import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.OwnerRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
@@ -20,9 +20,11 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService.calculateDailyPayment;
+import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil.localDateTimeToYMDFormat;
 
 @Service
 @RequiredArgsConstructor
@@ -264,5 +266,83 @@ public class OwnerService {
                 totalPayment,
                 ownerSalaryCalendarEmployeeListGetResponseList
         );
+    }
+
+    @Transactional(readOnly = true)
+    public OwnerAttendanceGetResponse findAttendance(Long userId, Long attendanceId){
+        Owner owner = ownerRepository.findByUserId(userId)
+                .orElseThrow(OwnerNotFoundException::new);
+
+        Attendance attendance = attendanceRepository.findById(attendanceId)
+                .orElseThrow(AttendanceNotFoundException::new);
+
+        // 사용자 검증
+        if(userId != attendance.getWorkPlaceEmployee().getWorkPlace().getOwner().getUserId()){
+            throw new OwnerInvalidException(userId);
+        }
+
+        return OwnerAttendanceGetResponse.fromEntity(attendance);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public OwnerAttendanceUpsertResponse saveAttendance(Long userId, OwnerAttendanceUpsertRequest request){
+        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(request.workPlaceEmployeeId())
+                .orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+
+        if(userId != workPlaceEmployee.getWorkPlace().getOwner().getUserId()){
+            throw new OwnerInvalidException();
+        }
+
+        boolean isReal = request.endTime().isBefore(LocalDateTime.now());
+
+        Attendance attendance = Attendance.builder()
+                .workPlaceEmployee(workPlaceEmployee)
+                .attendanceType(isReal? AttendanceType.REAL : AttendanceType.EXPECT)
+                .payPerHour(request.payPerHour())
+                .attendDate(localDateTimeToYMDFormat(request.startTime()))
+                .startTime(request.startTime())
+                .endTime(request.endTime())
+                .realStartTime(isReal ? request.startTime() : null)
+                .realEndTime(isReal ? request.endTime() : null)
+                .restMinute(request.restMinute())
+                .build();
+
+        attendanceRepository.save(attendance);
+        return new OwnerAttendanceUpsertResponse(attendance.getAttendanceId());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public OwnerAttendanceUpsertResponse updateAttendance(Long userId, Long attendanceId, OwnerAttendanceUpsertRequest request){
+        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(request.workPlaceEmployeeId())
+                .orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+
+        Attendance attendance = attendanceRepository.findById(attendanceId)
+                .orElseThrow(AttendanceNotFoundException::new);
+
+        //해당 사업장의 근무자가 아닐 경우 예외 처리
+        if(attendance.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceId() != workPlaceEmployee.getWorkPlace().getWorkPlaceId()){
+            throw new WorkPlaceEmployeeInvalidException(workPlaceEmployee.getWorkPlaceEmployeeId());
+        }
+
+        //사장님 확인
+        if(userId != workPlaceEmployee.getWorkPlace().getOwner().getUserId()){
+            throw new OwnerInvalidException();
+        }
+
+        boolean isReal = request.endTime().isBefore(LocalDateTime.now());
+
+        attendance.modifyAttendance(
+                workPlaceEmployee,
+                isReal ? AttendanceType.REAL : AttendanceType.EXPECT,
+                request.payPerHour(),
+                localDateTimeToYMDFormat(request.startTime()),
+                request.startTime(),
+                request.endTime(),
+                isReal ? request.startTime() : null,
+                isReal ? request.endTime() : null,
+                request.restMinute()
+        );
+
+        return new OwnerAttendanceUpsertResponse(attendance.getAttendanceId());
     }
 }
