@@ -53,7 +53,6 @@ public class EmployeeService {
     private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
     private final PayStubRepository payStubRepository;
     private final NotificationRepository notificationRepository;
-    private final WorkPlaceRepository workPlaceRepository;
 
     @Transactional(readOnly = true)
     public EmployeeAccountGetResponse getEmployeeAccount(Long userId) {
@@ -65,7 +64,7 @@ public class EmployeeService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public EmployeeAccountUpsertResponse registerEmployeeAccount(Long userId, EmployeeAccountRegRequest dto){
-        // employee 존재 여부 확인
+        // 이미 employee 존재 시 가입 X
         employeeRepository.findByUserId(userId).ifPresent(employee -> {
             throw new EmployeeDuplicatedException();
         });
