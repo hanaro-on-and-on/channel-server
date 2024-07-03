@@ -7,6 +7,6 @@ import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTim
 public record EmploymentContractListGetResponse(Long employmentContractId, String colorTypeCd, String workPlaceNm, String employmentContractCreatedAt) {
 
     public static EmploymentContractListGetResponse fromProjection(EmploymentContractSummary projection){
-        return new EmploymentContractListGetResponse(projection.getEmploymentContractId(), projection.getColorTypeCd(), projection.getWorkPlaceNm(), localDateTimeToYMDDashFormat(projection.getEmploymentContractCreatedAt()));
+        return new EmploymentContractListGetResponse(projection.getEmploymentContractId(), projection.getColorTypeCd().getCode(), projection.getWorkPlaceNm(), localDateTimeToYMDDashFormat(projection.getEmploymentContractCreatedAt()));
     }
 }
