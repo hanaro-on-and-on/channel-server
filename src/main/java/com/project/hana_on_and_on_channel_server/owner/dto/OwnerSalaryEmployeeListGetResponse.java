@@ -8,7 +8,7 @@ import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFou
 import java.util.List;
 
 public record OwnerSalaryEmployeeListGetResponse(
-        Long id,
+        Long workPlaceId,
         String workPlaceName,
         String workPlaceColor,
         Integer payment,
