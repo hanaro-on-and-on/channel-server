@@ -11,6 +11,7 @@ import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.attendance.dto.NotificationGetResponse;
+import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeInvalidException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
@@ -132,9 +133,14 @@ public class AttendanceService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public AttendanceWorkPlaceGetResponse getWorkPlace(Long userId, Long workPlaceEmployeeId){
-        //TODO userId랑 workPlaceEmployee랑 일치하는 지 확인
         WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId)
                 .orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+
+        //사용자 검증
+        if(userId != workPlaceEmployee.getEmployee().getUserId()){
+            throw  new WorkPlaceEmployeeInvalidException();
+        }
+
         EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(workPlaceEmployee)
                 .orElseThrow(EmployeeNotFoundException::new);
         WorkPlace workPlace = Optional.ofNullable(workPlaceEmployee.getWorkPlace()).orElseThrow(WorkPlaceNotFoundException::new);
