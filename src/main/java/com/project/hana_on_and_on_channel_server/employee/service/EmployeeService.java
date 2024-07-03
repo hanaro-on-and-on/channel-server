@@ -86,22 +86,36 @@ public class EmployeeService {
         // 1. 초대된 사업장 : 휴대폰 번호로, 전자서명 안 된 계약서 찾기
         List<EmploymentContract> employmentContractList = employmentContractRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
         List<EmployeeWorkPlaceGetResponse> invitatedWorkPlaceGetResponseList = employmentContractList.stream()
-                .map(employmentContract -> EmployeeWorkPlaceGetResponse.fromEntity(employmentContract, userId))
+                .map(employmentContract -> EmployeeWorkPlaceGetResponse.fromEntity(employmentContract))
                 .toList();
 
         // 2. 연결된 사업장
         List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployee(employee);
         List<EmployeeWorkPlaceGetResponse> connectedWorkPlaceGetResponseList = workPlaceEmployeeList.stream()
-                .map(workPlaceEmployee -> EmployeeWorkPlaceGetResponse.fromEntity(workPlaceEmployee, userId))
+                .map(workPlaceEmployee -> EmployeeWorkPlaceGetResponse.fromEntity(workPlaceEmployee))
                 .toList();
 
         // 3. 수동 사업장
         List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
         List<EmployeeWorkPlaceGetResponse> customWorkPlaceGetResponseList = customWorkPlaceList.stream()
-                .map(customWorkPlace -> EmployeeWorkPlaceGetResponse.fromEntity(customWorkPlace, userId))
+                .map(customWorkPlace -> EmployeeWorkPlaceGetResponse.fromEntity(customWorkPlace))
                 .toList();
 
         return new EmployeeWorkPlaceListGetResponse(invitatedWorkPlaceGetResponseList, connectedWorkPlaceGetResponseList, customWorkPlaceGetResponseList);
+    }
+
+    @Transactional(readOnly = true)
+    public EmployeeWorkPlaceCustomListGetResponse getCustomWorkPlaces(Long userId) {
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // 수동 사업장
+        List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
+        List<EmployeeWorkPlaceGetResponse> customWorkPlaceGetResponseList = customWorkPlaceList.stream()
+                .map(customWorkPlace -> EmployeeWorkPlaceGetResponse.fromEntity(customWorkPlace))
+                .toList();
+
+        return new EmployeeWorkPlaceCustomListGetResponse(customWorkPlaceGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
