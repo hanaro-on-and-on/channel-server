@@ -241,4 +241,39 @@ public class OwnerService {
         attendanceRepository.save(attendance);
         return new OwnerAttendanceUpsertResponse(attendance.getAttendanceId());
     }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public OwnerAttendanceUpsertResponse updateAttendance(Long userId, Long attendanceId, OwnerAttendanceUpsertRequest request){
+        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(request.workPlaceEmployeeId())
+                .orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+
+        Attendance attendance = attendanceRepository.findById(attendanceId)
+                .orElseThrow(AttendanceNotFoundException::new);
+
+        //해당 사업장의 근무자가 아닐 경우 예외 처리
+        if(attendance.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceId() != workPlaceEmployee.getWorkPlace().getWorkPlaceId()){
+            throw new WorkPlaceEmployeeInvalidException(workPlaceEmployee.getWorkPlaceEmployeeId());
+        }
+
+        //사장님 확인
+        if(userId != workPlaceEmployee.getWorkPlace().getOwner().getUserId()){
+            throw new OwnerInvalidException();
+        }
+
+        boolean isReal = request.endTime().isBefore(LocalDateTime.now());
+
+        attendance.modifyAttendance(
+                workPlaceEmployee,
+                isReal ? AttendanceType.REAL : AttendanceType.EXPECT,
+                request.payPerHour(),
+                localDateTimeToYMDFormat(request.startTime()),
+                request.startTime(),
+                request.endTime(),
+                isReal ? request.startTime() : null,
+                isReal ? request.endTime() : null,
+                request.restMinute()
+        );
+
+        return new OwnerAttendanceUpsertResponse(attendance.getAttendanceId());
+    }
 }

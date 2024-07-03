@@ -63,6 +63,18 @@ public class Attendance extends BaseEntity {
         this.attendanceType = attendanceType;
     }
 
+    public void modifyAttendance(WorkPlaceEmployee workPlaceEmployee, AttendanceType attendanceType, Long payPerHour, String attendDate, LocalDateTime startTime, LocalDateTime endTime, LocalDateTime realStartTime, LocalDateTime realEndTime, Integer restMinute){
+        this.workPlaceEmployee = workPlaceEmployee;
+        this.attendanceType = attendanceType;
+        this.payPerHour = payPerHour;
+        this.attendDate = attendDate;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.realStartTime = realStartTime;
+        this.realEndTime = realEndTime;
+        this.restMinute = restMinute;
+    }
+
     @Builder
     public Attendance(WorkPlaceEmployee workPlaceEmployee, AttendanceType attendanceType, Long payPerHour,
                       String attendDate,LocalDateTime startTime, LocalDateTime endTime, LocalDateTime realStartTime,

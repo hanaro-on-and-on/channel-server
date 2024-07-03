@@ -27,4 +27,10 @@ public class OwnerAttendanceController {
         OwnerAttendanceUpsertResponse response = ownerService.saveAttendance(userId, dto);
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/manual/{attendanceId}")
+    public ResponseEntity<OwnerAttendanceUpsertResponse> updateAttendance(@AuthenticationPrincipal Long userId, @PathVariable Long attendanceId, @RequestBody OwnerAttendanceUpsertRequest dto){
+        OwnerAttendanceUpsertResponse response = ownerService.updateAttendance(userId, attendanceId, dto);
+        return ResponseEntity.ok(response);
+    }
 }
