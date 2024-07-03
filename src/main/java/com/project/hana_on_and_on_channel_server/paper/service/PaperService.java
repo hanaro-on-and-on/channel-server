@@ -6,6 +6,7 @@ import com.project.hana_on_and_on_channel_server.attendance.repository.Attendanc
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomAttendanceMemo;
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
 import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
+import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceInvalidException;
 import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeInvalidException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
@@ -16,6 +17,7 @@ import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerInvalidException;
+import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeInvalidException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.paper.dto.PaperWorkPlaceGetResponse;
@@ -239,6 +241,43 @@ public class PaperService {
                     .taxRate(9.4).taxPay(payStub.calcTotalTaxPay(0.094))
                     .build();
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public MonthlyAttendanceGetResponse getMonthlyAttendance(Long userId, Long workPlaceEmployeeId, int year, int month){
+        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId)
+                .orElseThrow(WorkPlaceNotFoundException::new);
+        WorkPlace workPlace = workPlaceEmployee.getWorkPlace();
+
+        // workPlaceEmployee와 관련된 사용자(알바생 본인, 사장님)가 아닐 경우 예외 처리
+        if(userId != workPlaceEmployee.getEmployee().getUserId() || userId != workPlace.getOwner().getUserId()){
+            throw new WorkPlaceEmployeeInvalidException(workPlaceEmployeeId);
+        }
+
+        String searchMonth = String.format("%d%02d", year, month);
+
+        List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendanceTypeAndAttendDateStartingWith(
+                workPlaceEmployee,
+                AttendanceType.REAL,
+                searchMonth
+        );
+
+        return MonthlyAttendanceGetResponse.fromAttendance(workPlace, attendanceList, year, month);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public MonthlyAttendanceGetResponse getMonthlyCustomAttendance(Long userId, Long customWorkPlaceId, int year, int month){
+        CustomWorkPlace customWorkPlace = customWorkPlaceRepository.findById(customWorkPlaceId)
+                .orElseThrow(CustomWorkPlaceNotFoundException::new);
+
+        if(userId != customWorkPlace.getEmployee().getUserId()){
+            throw new CustomWorkPlaceInvalidException(customWorkPlaceId);
+        }
+
+        String searchDate = String.format("%d%02d", year, month);
+        List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAndAttendDateStartingWith(customWorkPlace, searchDate);
+
+        return MonthlyAttendanceGetResponse.fromCustomAttendance(customWorkPlace, customAttendanceMemoList, year, month);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
