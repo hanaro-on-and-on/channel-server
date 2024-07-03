@@ -191,21 +191,14 @@ public class OwnerService {
         List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceId(workPlaceId);
 
         for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
-            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateStartingWith(
-                    workPlaceEmployee, searchDate
-            );
+            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateStartingWith(workPlaceEmployee, searchDate);
 
             int payment = attendanceList.stream()
                     .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour()))
                     .sum();
 
             ownerSalaryEmployeeGetResponseList.add(
-                    new OwnerSalaryEmployeeGetResponse(
-                            workPlaceEmployee.getWorkPlaceEmployeeId(),
-                            workPlaceEmployee.getEmployee().getEmployeeNm(),
-                            workPlaceEmployee.getWorkStartDate(),
-                            payment
-                    )
+                    OwnerSalaryEmployeeGetResponse.fromEntity(workPlaceEmployee, payment)
             );
         }
 
