@@ -1,16 +1,14 @@
 package com.project.hana_on_and_on_channel_server.owner.controller;
 
+import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountGetResponse;
+import com.project.hana_on_and_on_channel_server.owner.dto.OwnerAccountGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.dto.OwnerAccountUpsertRequest;
 import com.project.hana_on_and_on_channel_server.owner.dto.OwnerAccountUpsertResponse;
 import com.project.hana_on_and_on_channel_server.owner.service.OwnerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,6 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class OwnerAccountController {
 
     private final OwnerService ownerService;
+
+    @GetMapping
+    public ResponseEntity<OwnerAccountGetResponse> getEmployeeAccount(@AuthenticationPrincipal Long userId){
+        OwnerAccountGetResponse response = ownerService.getOwnerAccount(userId);
+        return ResponseEntity.ok(response);
+    }
 
     /**
      * 사장님 Entity 생성 및 계좌 등록

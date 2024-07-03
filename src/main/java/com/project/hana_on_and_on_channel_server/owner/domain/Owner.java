@@ -26,6 +26,9 @@ public class Owner extends BaseEntity {
     @Column(name = "owner_nm")
     private String ownerNm;
 
+    @Column(nullable = false)
+    private String phoneNumber;
+
     @Column(name = "account_number")
     private String accountNumber;
 

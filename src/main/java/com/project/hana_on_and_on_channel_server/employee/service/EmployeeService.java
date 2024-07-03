@@ -47,6 +47,36 @@ public class EmployeeService {
     private final NotificationRepository notificationRepository;
 
     @Transactional(readOnly = true)
+    public EmployeeAccountGetResponse getEmployeeAccount(Long userId) {
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        return EmployeeAccountGetResponse.fromEntity(employee);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public EmployeeAccountUpsertResponse registerEmployeeAccount(Long userId, EmployeeAccountRegRequest employeeAccountRegRequest){
+        // employee 존재 여부 확인
+        employeeRepository.findByUserId(userId).ifPresent(employee -> {
+            throw new EmployeeDuplicatedException();
+        });
+
+        // employee 등록
+        Employee employee = employeeRepository.save(Employee.builder()
+                .userId(userId)
+                .accountNumber(employeeAccountRegRequest.accountNumber())
+                .employeeNm(employeeAccountRegRequest.employeeNm())
+                .build());
+        return EmployeeAccountUpsertResponse.fromEntity(employee);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void updateEmployeeAccount(Long userId, EmployeeAccountUpsertRequest employeeAccountUpsertRequest){
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+        employee.registerAccountNumber(employeeAccountUpsertRequest.accountNumber());
+    }
+
+    @Transactional(readOnly = true)
     public EmployeeWorkPlaceListGetResponse getWorkPlaces(Long userId) {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
@@ -252,27 +282,5 @@ public class EmployeeService {
                 connectedCurrentPayment,
                 connectedTotalPayment,
                 employeeSalaryCalendarGetResponseList);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRED)
-    public EmployeeAccountUpsertResponse registerEmployeeAccount(Long userId, EmployeeAccountRegRequest employeeAccountRegRequest){
-        // employee 존재 여부 확인
-        employeeRepository.findByUserId(userId).ifPresent(employee -> {
-            throw new EmployeeDuplicatedException();
-        });
-
-        // employee 등록
-        Employee employee = employeeRepository.save(Employee.builder()
-                .userId(userId)
-                .accountNumber(employeeAccountRegRequest.accountNumber())
-                .employeeNm(employeeAccountRegRequest.employeeNm())
-                .build());
-        return EmployeeAccountUpsertResponse.fromEntity(employee);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRED)
-    public void updateEmployeeAccount(Long userId, EmployeeAccountUpsertRequest employeeAccountUpsertRequest){
-        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
-        employee.registerAccountNumber(employeeAccountUpsertRequest.accountNumber());
     }
 }

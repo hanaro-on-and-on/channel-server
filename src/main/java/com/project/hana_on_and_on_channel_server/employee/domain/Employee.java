@@ -27,11 +27,11 @@ public class Employee extends BaseEntity {
     @Column(nullable = false)
     private String employeeNm;
 
-    @Column(nullable = false, length = 255)
-    private String accountNumber;
-
     @Column(nullable = false)
     private String phoneNumber;
+
+    @Column(nullable = false, length = 255)
+    private String accountNumber;
 
     public void registerAccountNumber(String accountNumber){this.accountNumber = accountNumber;}
 
