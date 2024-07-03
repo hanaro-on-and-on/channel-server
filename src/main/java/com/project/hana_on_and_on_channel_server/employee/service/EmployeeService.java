@@ -12,21 +12,14 @@ import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotF
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomAttendanceMemoRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomWorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
-import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
-import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
+import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
-import com.project.hana_on_and_on_channel_server.owner.dto.OwnerSalaryCalendarEmployeeListGetResponse;
-import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
-import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
-import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
+import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
-import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.domain.PayStub;
-import com.project.hana_on_and_on_channel_server.paper.exception.PayStubNotFoundException;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
-import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractsRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.PayStubRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -51,6 +44,7 @@ public class EmployeeService {
     private final AttendanceRepository attendanceRepository;
     private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
     private final PayStubRepository payStubRepository;
+    private final NotificationRepository notificationRepository;
 
     @Transactional(readOnly = true)
     public EmployeeWorkPlaceListGetResponse getWorkPlaces(Long userId) {
@@ -60,69 +54,22 @@ public class EmployeeService {
         // 1. 초대된 사업장 : 휴대폰 번호로, 전자서명 안 된 계약서 찾기
         List<EmploymentContract> employmentContractList = employmentContractRepository.findByEmployeePhoneAndEmployeeSign(employee.getPhoneNumber(), false);
         List<EmployeeWorkPlaceGetResponse> invitatedWorkPlaceGetResponseList = employmentContractList.stream()
-                .map(employmentContract -> {
-                    WorkPlaceEmployee workPlaceEmployee = employmentContract.getWorkPlaceEmployee();
-                    if (workPlaceEmployee == null) {
-                        throw new WorkPlaceEmployeeNotFoundException();
-                    }
-                    WorkPlace workPlace = workPlaceEmployee.getWorkPlace();
-                    if (workPlace == null) {
-                        throw new WorkPlaceNotFoundException();
-                    }
-                    Owner owner = workPlace.getOwner();
-                    if (owner == null) {
-                        throw new OwnerNotFoundException();
-                    }
-                    return new EmployeeWorkPlaceGetResponse(
-                            workPlaceEmployee.getDeletedYn(),
-                            userId,
-                            employmentContract.getEmploymentContractId(),
-                            workPlace.getWorkPlaceNm(),
-                            workPlace.getColorType(),
-                            owner.getOwnerNm()
-                    );
-                })
+                .map(employmentContract -> EmployeeWorkPlaceGetResponse.fromEntity(employmentContract, userId))
                 .toList();
 
         // 2. 연결된 사업장
         List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployee(employee);
         List<EmployeeWorkPlaceGetResponse> connectedWorkPlaceGetResponseList = workPlaceEmployeeList.stream()
-                .map(workPlaceEmployee -> {
-                    WorkPlace workPlace = workPlaceEmployee.getWorkPlace();
-                    if (workPlace == null) {
-                        throw new WorkPlaceNotFoundException();
-                    }
-                    Owner owner = workPlace.getOwner();
-                    if (owner == null) {
-                        throw new OwnerNotFoundException();
-                    }
-                    return new EmployeeWorkPlaceGetResponse(
-                            workPlaceEmployee.getDeletedYn(),
-                            userId,
-                            null,
-                            workPlace.getWorkPlaceNm(),
-                            workPlace.getColorType(),
-                            owner.getOwnerNm()
-                    );
-                })
+                .map(workPlaceEmployee -> EmployeeWorkPlaceGetResponse.fromEntity(workPlaceEmployee, userId))
                 .toList();
 
         // 3. 수동 사업장
         List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
         List<EmployeeWorkPlaceGetResponse> customWorkPlaceGetResponseList = customWorkPlaceList.stream()
-                .map(customWorkPlace -> {
-                    return new EmployeeWorkPlaceGetResponse(
-                            false,
-                            userId,
-                            null,
-                            customWorkPlace.getCustomWorkPlaceNm(),
-                            customWorkPlace.getColorType(),
-                            null
-                    );
-                })
+                .map(customWorkPlace -> EmployeeWorkPlaceGetResponse.fromEntity(customWorkPlace, userId))
                 .toList();
 
-        return EmployeeWorkPlaceListGetResponse.fromEntity(invitatedWorkPlaceGetResponseList, connectedWorkPlaceGetResponseList, customWorkPlaceGetResponseList);
+        return new EmployeeWorkPlaceListGetResponse(invitatedWorkPlaceGetResponseList, connectedWorkPlaceGetResponseList, customWorkPlaceGetResponseList);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -137,6 +84,19 @@ public class EmployeeService {
                         .payPerHour(employeeWorkPlaceCustomCreateRequest.payPerHour())
                 .build());
         return EmployeeWorkPlaceCustomCreateResponse.fromEntity(customWorkPlace);
+    }
+
+    @Transactional(readOnly = true)
+    public EmployeeNotificationRecentGetResponse getRecentNotification(Long userId, Long workPlaceId) {
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // TODO employee에 연결된 workPlace가 맞는지 검증
+
+        Notification notification = notificationRepository.findTop1ByWorkPlaceWorkPlaceIdOrderByCreatedAtDesc(workPlaceId)
+                .orElse(null);
+
+        return EmployeeNotificationRecentGetResponse.fromEntity(notification);
     }
 
     @Transactional(readOnly = true)
@@ -208,7 +168,7 @@ public class EmployeeService {
                 .mapToInt(EmployeeSalaryGetResponse::payment)
                 .sum();
 
-        return EmployeeSalaryListGetResponse.fromEntity(year, month, totalPayment, employeeSalaryGetResponseList);
+        return new EmployeeSalaryListGetResponse(year, month, totalPayment, employeeSalaryGetResponseList);
     }
 
     @Transactional(readOnly = true)
@@ -278,18 +238,7 @@ public class EmployeeService {
                 notConnectedTotalPayment += payment;
 
                 employeeSalaryCalendarGetResponseList.add(
-                        new EmployeeSalaryCalendarGetResponse(
-                                false,
-                                customAttendanceMemo.getCustomAttendanceMemoId(),
-                                customWorkPlace.getCustomWorkPlaceNm(),
-                                customWorkPlace.getColorType().getCode(),
-                                customAttendanceMemo.getAttendDate(),
-                                AttendanceType.EXPECT,
-                                customAttendanceMemo.getStartTime(),
-                                customAttendanceMemo.getEndTime(),
-                                customAttendanceMemo.getRestMinute(),
-                                payment
-                        )
+                        EmployeeSalaryCalendarGetResponse.fromEntity(customWorkPlace, customAttendanceMemo, payment)
                 );
             }
         }
@@ -297,7 +246,7 @@ public class EmployeeService {
         // attendDate 순 정렬
         Collections.sort(employeeSalaryCalendarGetResponseList, Comparator.comparing(EmployeeSalaryCalendarGetResponse::attendDate));
 
-        return EmployeeSalaryCalendarListGetResponse.fromEntity(
+        return new EmployeeSalaryCalendarListGetResponse(
                 connectedCurrentPayment + notConnectedCurrentPayment,
                 connectedTotalPayment + notConnectedTotalPayment,
                 connectedCurrentPayment,

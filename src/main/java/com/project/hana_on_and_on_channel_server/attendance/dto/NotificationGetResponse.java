@@ -1,4 +1,4 @@
-package com.project.hana_on_and_on_channel_server.owner.dto;
+package com.project.hana_on_and_on_channel_server.attendance.dto;
 
 import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 
