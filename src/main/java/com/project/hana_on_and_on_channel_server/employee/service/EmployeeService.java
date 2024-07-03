@@ -199,8 +199,13 @@ public class EmployeeService {
             List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateStartingWith(workPlaceEmployee, searchDate);
 
             int payment = attendanceList.stream()
-                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour()))
-                    .sum();
+                    .mapToInt(attendance -> calculateDailyPayment(
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealEndTime() : attendance.getEndTime(),
+                            attendance.getRestMinute(),
+                            attendance.getPayPerHour()
+                            )
+                    ).sum();
 
             PayStub payStub = payStubRepository.findByWorkPlaceEmployeeIdAndYearAndMonth(workPlaceEmployee.getWorkPlaceEmployeeId(), year, month)
                             .orElse(null);
@@ -217,8 +222,13 @@ public class EmployeeService {
             List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAndAttendDateStartingWith(customWorkPlace, searchDate);
 
             int payment = customAttendanceMemoList.stream()
-                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getRestMinute(), customAttendanceMemo.getPayPerHour()))
-                    .sum();
+                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(
+                            customAttendanceMemo.getStartTime(),
+                            customAttendanceMemo.getEndTime(),
+                            customAttendanceMemo.getRestMinute(),
+                            customAttendanceMemo.getPayPerHour()
+                            )
+                    ).sum();
 
             employeeSalaryGetResponseList.add(
                     EmployeeSalaryGetResponse.fromEntity(customWorkPlace, payment)
@@ -260,7 +270,12 @@ public class EmployeeService {
             );
 
             for (Attendance attendance : attendanceList) {
-                int payment = calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour());
+                int payment = calculateDailyPayment(
+                        attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
+                        attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealEndTime() : attendance.getEndTime(),
+                        attendance.getRestMinute(),
+                        attendance.getPayPerHour()
+                );
                 if (attendance.getAttendDate().compareTo(yesterDate) <= 0) {    // 1일~어제 까지
                     connectedCurrentPayment += payment;
                 }
@@ -281,7 +296,12 @@ public class EmployeeService {
             );
 
             for (CustomAttendanceMemo customAttendanceMemo : customAttendanceMemoList) {
-                int payment = calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getRestMinute(), customAttendanceMemo.getPayPerHour());
+                int payment = calculateDailyPayment(
+                        customAttendanceMemo.getStartTime(),
+                        customAttendanceMemo.getEndTime(),
+                        customAttendanceMemo.getRestMinute(),
+                        customAttendanceMemo.getPayPerHour()
+                );
                 if (customAttendanceMemo.getAttendDate().compareTo(yesterDate) <= 0) {    // 1일~어제 까지
                     notConnectedCurrentPayment += payment;
                 }

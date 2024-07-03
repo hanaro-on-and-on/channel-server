@@ -228,8 +228,13 @@ public class OwnerService {
             List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateStartingWith(workPlaceEmployee, searchDate);
 
             int payment = attendanceList.stream()
-                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour()))
-                    .sum();
+                    .mapToInt(attendance -> calculateDailyPayment(
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealEndTime() : attendance.getEndTime(),
+                            attendance.getRestMinute(),
+                            attendance.getPayPerHour()
+                            )
+                    ).sum();
 
             ownerSalaryEmployeeGetResponseList.add(
                     OwnerSalaryEmployeeGetResponse.fromEntity(workPlaceEmployee, payment)
@@ -274,7 +279,12 @@ public class OwnerService {
                         continue;
                     }
 
-                    int payment = calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour());
+                    int payment = calculateDailyPayment(
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealEndTime() : attendance.getEndTime(),
+                            attendance.getRestMinute(),
+                            attendance.getPayPerHour()
+                    );
 
                     dailyEmployeeResponseList.computeIfAbsent(searchDate, k -> new ArrayList<>())
                             .add(
