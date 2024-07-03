@@ -6,12 +6,12 @@ import com.project.hana_on_and_on_channel_server.attendance.dto.*;
 import com.project.hana_on_and_on_channel_server.attendance.exception.AttendanceNotFoundException;
 import com.project.hana_on_and_on_channel_server.attendance.exception.GeoLocationNotFoundException;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
-import com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.attendance.dto.NotificationGetResponse;
+import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeInvalidException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil.localDateTimeToTodayOfWeekFormat;
+import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil.localDateTimeToYMDFormat;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +58,7 @@ public class AttendanceService {
                 dto.workPlaceEmployeeId()).orElseThrow(WorkPlaceEmployeeNotFoundException::new);
         Attendance attendance = attendanceRepository.findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(
                         workPlaceEmployee.getWorkPlaceEmployeeId(),
-                        LocalDateTimeUtil.localDateTimeToYMDFormat(LocalDateTime.now())
+                        localDateTimeToYMDFormat(LocalDateTime.now())
                 )
                 .orElseThrow(() -> new AttendanceNotFoundException());
 
@@ -80,7 +81,7 @@ public class AttendanceService {
                 dto.workPlaceEmployeeId()).orElseThrow(WorkPlaceEmployeeNotFoundException::new);
         Attendance attendance = attendanceRepository.findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(
                         workPlaceEmployee.getWorkPlaceEmployeeId(),
-                        LocalDateTimeUtil.localDateTimeToYMDFormat(LocalDateTime.now())
+                        localDateTimeToYMDFormat(LocalDateTime.now())
                 )
                 .orElseThrow(() -> new AttendanceNotFoundException());;
 
@@ -105,17 +106,17 @@ public class AttendanceService {
     public AttendanceTodayListGetResponse getTodayAttendanceList(Long userId){
         String dayOfWeek = localDateTimeToTodayOfWeekFormat(LocalDateTime.now());
 
+        //현재 근무중인 최신 근로계약서 목록 가져오기
         List<Long> latestEmploymentContractList = attendanceRepository.findLatestEmploymentContractList(userId);
         List<EmploymentContract> employmentContractList = employmentContractRepository.findAllById(latestEmploymentContractList);
 
-        //오늘 출근할 근무지 목록
+        //오늘 출결 목록
         List<AttendanceTodayGetResponse> todayList = employmentContractList.stream()
-                .filter(employmentContract -> workTimeRepository.existsByEmploymentContractAndWorkDayOfWeek(employmentContract, dayOfWeek))
-                .map(employmentContract -> {
-                    List<WorkTime> workTimeList = workTimeRepository.findByEmploymentContract(employmentContract);
-                    List<Notification> notificationList = notificationRepository.findByWorkPlaceWorkPlaceId(employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceId());
-                    return AttendanceTodayGetResponse.fromEntity(employmentContract, workTimeList, notificationList);
-                })
+                .flatMap(employmentContract -> attendanceRepository.findByWorkPlaceEmployeeWorkPlaceEmployeeIdAndAttendDate(employmentContract.getWorkPlaceEmployee().getWorkPlaceEmployeeId(), localDateTimeToYMDFormat(LocalDateTime.now()))
+                        .map(attendance -> {
+                            List<Notification> notificationList = notificationRepository.findByWorkPlaceWorkPlaceId(employmentContract.getWorkPlaceEmployee().getWorkPlace().getWorkPlaceId());
+                            return AttendanceTodayGetResponse.fromEntity(employmentContract, attendance, notificationList);
+                        }).stream())
                 .collect(Collectors.toList());
 
         //이외
@@ -132,9 +133,14 @@ public class AttendanceService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public AttendanceWorkPlaceGetResponse getWorkPlace(Long userId, Long workPlaceEmployeeId){
-        //TODO userId랑 workPlaceEmployee랑 일치하는 지 확인
         WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId)
                 .orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+
+        //사용자 검증
+        if(userId != workPlaceEmployee.getEmployee().getUserId()){
+            throw  new WorkPlaceEmployeeInvalidException();
+        }
+
         EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(workPlaceEmployee)
                 .orElseThrow(EmployeeNotFoundException::new);
         WorkPlace workPlace = Optional.ofNullable(workPlaceEmployee.getWorkPlace()).orElseThrow(WorkPlaceNotFoundException::new);
