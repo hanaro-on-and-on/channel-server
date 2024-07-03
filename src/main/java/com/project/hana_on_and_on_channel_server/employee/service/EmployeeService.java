@@ -7,6 +7,7 @@ import com.project.hana_on_and_on_channel_server.employee.domain.CustomAttendanc
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
 import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
 import com.project.hana_on_and_on_channel_server.employee.dto.*;
+import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeDuplicatedException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomAttendanceMemoRepository;
@@ -33,6 +34,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService.calculateDailyPayment;
+import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil.localDateTimeToYMDFormat;
 
 @Service
 @RequiredArgsConstructor
@@ -127,6 +129,31 @@ public class EmployeeService {
                 .orElse(null);
 
         return EmployeeNotificationRecentGetResponse.fromEntity(notification);
+    }
+
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public EmployeeAttendanceCustomCreateResponse saveCustomAttendanceMemo(Long userId, EmployeeAttendanceCustomCreateRequest dto){
+        // employee 존재 여부 확인
+        Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
+
+        // TODO 연결된 곳이 맞는지 확인
+
+        CustomWorkPlace customWorkPlace = customWorkPlaceRepository.findById(dto.customWorkPlaceId())
+                .orElseThrow(CustomWorkPlaceNotFoundException::new);
+
+        // CustomAttendanceMemo 생성
+        CustomAttendanceMemo customAttendanceMemo = customAttendanceMemoRepository.save(CustomAttendanceMemo.builder()
+                .customWorkPlace(customWorkPlace)
+                .payPerHour(dto.payPerHour())
+                .attendDate(localDateTimeToYMDFormat(dto.startTime()))
+                .startTime(dto.startTime())
+                .endTime(dto.endTime())
+                .restMinute(dto.restMinute())
+                .build()
+        );
+
+        return EmployeeAttendanceCustomCreateResponse.fromEntity(customAttendanceMemo);
     }
 
     @Transactional(readOnly = true)
