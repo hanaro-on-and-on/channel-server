@@ -22,10 +22,7 @@ import com.project.hana_on_and_on_channel_server.paper.domain.TotalHours;
 import com.project.hana_on_and_on_channel_server.paper.domain.WorkTime;
 import com.project.hana_on_and_on_channel_server.paper.domain.enumType.PayStubStatus;
 import com.project.hana_on_and_on_channel_server.paper.dto.*;
-import com.project.hana_on_and_on_channel_server.paper.exception.EmployeeContractAlreadyConnectedException;
-import com.project.hana_on_and_on_channel_server.paper.exception.EmploymentContractNotFoundException;
-import com.project.hana_on_and_on_channel_server.paper.exception.PayStubInvalidException;
-import com.project.hana_on_and_on_channel_server.paper.exception.PayStubNotFoundException;
+import com.project.hana_on_and_on_channel_server.paper.exception.*;
 import com.project.hana_on_and_on_channel_server.paper.projection.EmploymentContractSummary;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.PayStubRepository;
@@ -102,9 +99,14 @@ public class PaperService {
     public EmployeeAndWorkPlaceEmployeeConnectResponse signEmploymentContractAndConnectEmployeeToWorkPlace(Long userId, Long employmentContractId){
         EmploymentContract employmentContract = employmentContractRepository.findById(employmentContractId).orElseThrow(EmploymentContractNotFoundException::new);
 
+        // 본인 근로계약서가 아닐 경우 예외처리
+        if(userId != employmentContract.getWorkPlaceEmployee().getEmployee().getUserId()){
+            throw new EmploymentContractInvalidException(employmentContractId);
+        }
+
         // 근로계약서 서명되어있을 경우 예외처리
         if(employmentContract.getEmployeeSign()){
-            throw new EmployeeContractAlreadyConnectedException();
+            throw new EmploymentContractAlreadyConnectedException();
         }
 
         // 근로계약서 서명
