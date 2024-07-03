@@ -2,6 +2,7 @@ package com.project.hana_on_and_on_channel_server.employee.controller;
 
 import com.project.hana_on_and_on_channel_server.employee.dto.*;
 import com.project.hana_on_and_on_channel_server.employee.service.EmployeeService;
+import com.project.hana_on_and_on_channel_server.owner.dto.OwnerNotificationListGetResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,6 +24,12 @@ public class EmployeeWorkPlaceController {
     @PostMapping("/custom")
     public ResponseEntity<EmployeeWorkPlaceCustomCreateResponse> createCustomWorkPlaces(@AuthenticationPrincipal Long userId, @RequestBody EmployeeWorkPlaceCustomCreateRequest employeeWorkPlaceCustomCreateRequest){
         EmployeeWorkPlaceCustomCreateResponse response = employeeService.createCustomWorkPlaces(userId, employeeWorkPlaceCustomCreateRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{workPlaceId}/notifications/recent")
+    public ResponseEntity<EmployeeNotificationRecentGetResponse> getRecentNotification(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceId) {
+        EmployeeNotificationRecentGetResponse response = employeeService.getRecentNotification(userId, workPlaceId);
         return ResponseEntity.ok(response);
     }
 }

@@ -7,12 +7,4 @@ public record EmployeeWorkPlaceListGetResponse(
         List<EmployeeWorkPlaceGetResponse> connectedWorkPlaceList,
         List<EmployeeWorkPlaceGetResponse> customWorkPlaceList
 ) {
-
-    public static EmployeeWorkPlaceListGetResponse fromEntity(
-            List<EmployeeWorkPlaceGetResponse> invitatedWorkPlaceList,
-            List<EmployeeWorkPlaceGetResponse> connectedWorkPlaceList,
-            List<EmployeeWorkPlaceGetResponse> customWorkPlaceList
-    ) {
-        return new EmployeeWorkPlaceListGetResponse(invitatedWorkPlaceList, connectedWorkPlaceList, customWorkPlaceList);
-    }
 }

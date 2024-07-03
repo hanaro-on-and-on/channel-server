@@ -2,6 +2,7 @@ package com.project.hana_on_and_on_channel_server.owner.service;
 
 import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
+import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
@@ -9,6 +10,7 @@ import com.project.hana_on_and_on_channel_server.owner.dto.*;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerDuplicatedException;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
+import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.OwnerRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
@@ -30,6 +32,7 @@ public class OwnerService {
     private final WorkPlaceEmployeeRepository workPlaceEmployeeRepository;
     private final AttendanceRepository attendanceRepository;
     private final WorkPlaceRepository workPlaceRepository;
+    private final NotificationRepository notificationRepository;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public OwnerAccountUpsertResponse registerOwnerAccount(Long userId, OwnerAccountUpsertRequest dto) {
@@ -50,6 +53,72 @@ public class OwnerService {
         owner.registerAccountNumber(dto.accountNumber());
     }
 
+    @Transactional
+    public OwnerWorkPlaceUpsertResponse saveWorkPlace(OwnerWorkPlaceUpsertRequest dto) {
+        Owner owner = ownerRepository.findById(dto.ownerId())
+                .orElseThrow(OwnerNotFoundException::new);
+        WorkPlace workPlace = WorkPlace.builder().workPlaceNm(dto.workPlaceNm())
+                .address(dto.address()).location(dto.location().toPoint()).businessRegistrationNumber(dto.businessRegistrationNumber())
+                .openingDate(dto.openingDate()).workPlaceStatus(dto.workPlaceStatus())
+                .workPlaceType(dto.workPlaceType()).colorType(dto.colorType()).owner(owner).build();
+
+        WorkPlace savedWorkPlace = workPlaceRepository.save(workPlace);
+
+        return OwnerWorkPlaceUpsertResponse.fromEntity(savedWorkPlace);
+    }
+
+    @Transactional(readOnly = true)
+    public OwnerWorkPlaceEmployeeListGetResponse getEmployeeList(Long userId) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        List<OwnerWorkPlaceGetResponse> ownerWorkPlaceGetResponseList = new ArrayList<>();
+
+        List<WorkPlace> workPlaceList = workPlaceRepository.findByOwnerOwnerId(owner.getOwnerId());
+        for (WorkPlace workPlace : workPlaceList) {
+            List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceId(workPlace.getWorkPlaceId());
+            for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
+                ownerWorkPlaceGetResponseList.add(
+                        OwnerWorkPlaceGetResponse.fromEntity(workPlaceEmployee)
+                );
+            }
+        }
+        return new OwnerWorkPlaceEmployeeListGetResponse(ownerWorkPlaceGetResponseList);
+    }
+
+    @Transactional(readOnly = true)
+    public OwnerNotificationListGetResponse getNotificationList(Long userId, Long workPlaceId) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        // TODO owner가 소유한 workPlace가 맞는지 검증
+
+        List<OwnerNotificationGetResponse> ownerWorkPlaceGetResponseList = notificationRepository.findByWorkPlaceWorkPlaceId(workPlaceId).stream()
+                .map(notification -> OwnerNotificationGetResponse.fromEntity(notification))
+                .toList();
+
+        return new OwnerNotificationListGetResponse(ownerWorkPlaceGetResponseList);
+    }
+
+    @Transactional
+    public OwnerNotificationSaveResponse saveNotification(Long userId, Long workPlaceId, OwnerNotificationSaveRequest dto) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        WorkPlace workPlace = workPlaceRepository.findById(workPlaceId)
+                .orElseThrow(WorkPlaceNotFoundException::new);
+
+        // TODO owner가 소유한 workPlace가 맞는지 검증
+
+        Notification notification = notificationRepository.save(Notification.builder()
+                .title(dto.title())
+                .content(dto.content())
+                .workPlace(workPlace)
+                .build()
+        );
+
+        return OwnerNotificationSaveResponse.fromEntity(notification);
+    }
 
     @Transactional(readOnly = true)
     public OwnerSalaryWorkPlaceListGetResponse getSalaries(Long userId, Integer year, Integer month) {
@@ -72,13 +141,13 @@ public class OwnerService {
                 .mapToInt(OwnerSalaryEmployeeListGetResponse::payment)
                 .sum();
 
-        return OwnerSalaryWorkPlaceListGetResponse.fromEntity(year, month, totalPayment, ownerSalaryEmployeeListGetResponseList);
+        return new OwnerSalaryWorkPlaceListGetResponse(year, month, totalPayment, ownerSalaryEmployeeListGetResponseList);
     }
 
     @Transactional(readOnly = true)
     public OwnerSalaryEmployeeListGetResponse getWorkPlaceSalaries(Long userId, Long workPlaceId, Integer year, Integer month) {
         // owner 일치 여부 확인
-        // TODO
+        // TODO owner가 workPlace 소유한게 맞는지 확인
 
         // workPlace 존재 여부 확인
         WorkPlace workPlace = workPlaceRepository.findById(workPlaceId).orElseThrow(WorkPlaceNotFoundException::new);
@@ -115,7 +184,7 @@ public class OwnerService {
                 .mapToInt(OwnerSalaryEmployeeGetResponse::payment)
                 .sum();
 
-        return OwnerSalaryEmployeeListGetResponse.fromEntity(workPlaceId, workPlace.getWorkPlaceNm(), workPlace.getColorType(), totalPayment, ownerSalaryEmployeeGetResponseList);
+        return OwnerSalaryEmployeeListGetResponse.fromEntity(workPlace, totalPayment, ownerSalaryEmployeeGetResponseList);
     }
 
     @Transactional(readOnly = true)
@@ -190,7 +259,7 @@ public class OwnerService {
         // attendDate 순 정렬
         Collections.sort(ownerSalaryCalendarEmployeeListGetResponseList, Comparator.comparing(OwnerSalaryCalendarEmployeeListGetResponse::attendDate));
 
-        return OwnerSalaryCalendarWorkPlaceListGetResponse.fromEntity(
+        return new OwnerSalaryCalendarWorkPlaceListGetResponse(
                 currentPayment,
                 totalPayment,
                 ownerSalaryCalendarEmployeeListGetResponseList
