@@ -29,7 +29,7 @@ public class PaperController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/employment-contracts/{employmentContractId}/e-sign")
+    @PostMapping("/employment-contracts/{employmentContractId}/e-sign")
     public ResponseEntity<EmployeeAndWorkPlaceEmployeeConnectResponse> signEmploymentContractAndConnectEmployeeToWorkPlace(@AuthenticationPrincipal Long userId, @PathVariable Long employmentContractId){
         EmployeeAndWorkPlaceEmployeeConnectResponse response = paperService.signEmploymentContractAndConnectEmployeeToWorkPlace(userId, employmentContractId);
         return ResponseEntity.ok(response);
@@ -59,7 +59,7 @@ public class PaperController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/pay-stubs/{payStubId}/e-sign")
+    @PostMapping("/pay-stubs/{payStubId}/e-sign")
     public ResponseEntity<PayStubSignResponse> signPayStub(@AuthenticationPrincipal Long userId, @PathVariable Long payStubId){
         PayStubSignResponse response = paperService.signPayStub(userId, payStubId);
         return ResponseEntity.ok(response);
