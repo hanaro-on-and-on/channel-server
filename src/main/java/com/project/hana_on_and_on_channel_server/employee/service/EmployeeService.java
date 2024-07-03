@@ -17,20 +17,14 @@ import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
-import com.project.hana_on_and_on_channel_server.owner.dto.OwnerNotificationGetResponse;
-import com.project.hana_on_and_on_channel_server.owner.dto.OwnerNotificationListGetResponse;
-import com.project.hana_on_and_on_channel_server.owner.dto.OwnerSalaryCalendarEmployeeListGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
-import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.domain.PayStub;
-import com.project.hana_on_and_on_channel_server.paper.exception.PayStubNotFoundException;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
-import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractsRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.PayStubRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -296,18 +290,7 @@ public class EmployeeService {
                 notConnectedTotalPayment += payment;
 
                 employeeSalaryCalendarGetResponseList.add(
-                        new EmployeeSalaryCalendarGetResponse(
-                                false,
-                                customAttendanceMemo.getCustomAttendanceMemoId(),
-                                customWorkPlace.getCustomWorkPlaceNm(),
-                                customWorkPlace.getColorType().getCode(),
-                                customAttendanceMemo.getAttendDate(),
-                                AttendanceType.EXPECT,
-                                customAttendanceMemo.getStartTime(),
-                                customAttendanceMemo.getEndTime(),
-                                customAttendanceMemo.getRestMinute(),
-                                payment
-                        )
+                        EmployeeSalaryCalendarGetResponse.fromEntity(customWorkPlace, customAttendanceMemo, payment)
                 );
             }
         }
@@ -315,7 +298,7 @@ public class EmployeeService {
         // attendDate 순 정렬
         Collections.sort(employeeSalaryCalendarGetResponseList, Comparator.comparing(EmployeeSalaryCalendarGetResponse::attendDate));
 
-        return EmployeeSalaryCalendarListGetResponse.fromEntity(
+        return new EmployeeSalaryCalendarListGetResponse(
                 connectedCurrentPayment + notConnectedCurrentPayment,
                 connectedTotalPayment + notConnectedTotalPayment,
                 connectedCurrentPayment,
