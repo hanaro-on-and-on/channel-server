@@ -23,6 +23,12 @@ public class PaperController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{workPlaceId}/employment-contracts")
+    public ResponseEntity<EmploymentContractUpsertResponse> saveEmploymentContract(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceId,@RequestBody EmploymentContractUpsertRequest dto){
+        EmploymentContractUpsertResponse response = paperService.saveEmploymentContract(userId, workPlaceId, dto);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/employment-contracts/{employmentContractId}")
     public ResponseEntity<EmploymentContractGetResponse> findEmploymentContract(@PathVariable Long employmentContractId){
         EmploymentContractGetResponse response = paperService.findEmploymentContract(employmentContractId);
