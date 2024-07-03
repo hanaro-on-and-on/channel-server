@@ -7,16 +7,6 @@ public record EmployeeSalaryCalendarListGetResponse(
         Integer allTotalPayment,
         Integer connectedCurrentPayment,
         Integer connectedTotalPayment,
-        List<EmployeeSalaryCalendarGetResponse> employeeSalaryCalendarGetResponseList
+        List<EmployeeSalaryCalendarGetResponse> list
 ) {
-
-    public static EmployeeSalaryCalendarListGetResponse fromEntity(
-            Integer allCurrentPayment,
-            Integer allTotalPayment,
-            Integer connectedCurrentPayment,
-            Integer connectedTotalPayment,
-            List<EmployeeSalaryCalendarGetResponse> employeeSalaryCalendarGetResponseList
-    ){
-        return new EmployeeSalaryCalendarListGetResponse(allCurrentPayment, allTotalPayment, connectedCurrentPayment, connectedTotalPayment, employeeSalaryCalendarGetResponseList);
-    }
 }

@@ -6,15 +6,6 @@ public record OwnerSalaryWorkPlaceListGetResponse(
         Integer year,
         Integer month,
         Integer totalPayment,
-        List<OwnerSalaryEmployeeListGetResponse> ownerSalaryEmployeeListGetResponseList
+        List<OwnerSalaryEmployeeListGetResponse> workPlaceList
 ) {
-
-    public static OwnerSalaryWorkPlaceListGetResponse fromEntity(
-            Integer year,
-            Integer month,
-            Integer totalPayment,
-            List<OwnerSalaryEmployeeListGetResponse> ownerSalaryEmployeeListGetResponseList
-    ){
-        return new OwnerSalaryWorkPlaceListGetResponse(year, month, totalPayment, ownerSalaryEmployeeListGetResponseList);
-    }
 }

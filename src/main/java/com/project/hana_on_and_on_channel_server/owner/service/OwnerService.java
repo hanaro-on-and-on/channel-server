@@ -141,7 +141,7 @@ public class OwnerService {
                 .mapToInt(OwnerSalaryEmployeeListGetResponse::payment)
                 .sum();
 
-        return OwnerSalaryWorkPlaceListGetResponse.fromEntity(year, month, totalPayment, ownerSalaryEmployeeListGetResponseList);
+        return new OwnerSalaryWorkPlaceListGetResponse(year, month, totalPayment, ownerSalaryEmployeeListGetResponseList);
     }
 
     @Transactional(readOnly = true)
@@ -184,7 +184,7 @@ public class OwnerService {
                 .mapToInt(OwnerSalaryEmployeeGetResponse::payment)
                 .sum();
 
-        return OwnerSalaryEmployeeListGetResponse.fromEntity(workPlaceId, workPlace.getWorkPlaceNm(), workPlace.getColorType(), totalPayment, ownerSalaryEmployeeGetResponseList);
+        return OwnerSalaryEmployeeListGetResponse.fromEntity(workPlace, totalPayment, ownerSalaryEmployeeGetResponseList);
     }
 
     @Transactional(readOnly = true)
@@ -259,7 +259,7 @@ public class OwnerService {
         // attendDate 순 정렬
         Collections.sort(ownerSalaryCalendarEmployeeListGetResponseList, Comparator.comparing(OwnerSalaryCalendarEmployeeListGetResponse::attendDate));
 
-        return OwnerSalaryCalendarWorkPlaceListGetResponse.fromEntity(
+        return new OwnerSalaryCalendarWorkPlaceListGetResponse(
                 currentPayment,
                 totalPayment,
                 ownerSalaryCalendarEmployeeListGetResponseList

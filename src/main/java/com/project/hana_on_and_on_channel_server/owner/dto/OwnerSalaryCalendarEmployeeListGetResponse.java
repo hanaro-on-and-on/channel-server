@@ -10,17 +10,6 @@ public record OwnerSalaryCalendarEmployeeListGetResponse(
         String attendDate,
         Integer payment,
         Integer employeeSize,
-        List<OwnerSalaryCalendarEmployeeGetResponse> ownerSalaryCalendarEmployeeGetResponseList
+        List<OwnerSalaryCalendarEmployeeGetResponse> employeeList
 ) {
-
-    public static OwnerSalaryCalendarEmployeeListGetResponse fromEntity(
-            String workPlaceName,
-            String workPlaceColorCode,
-            String attendDate,
-            Integer payment,
-            Integer employeeSize,
-            List<OwnerSalaryCalendarEmployeeGetResponse> ownerSalaryCalendarEmployeeGetResponseList
-    ){
-        return new OwnerSalaryCalendarEmployeeListGetResponse(workPlaceName, workPlaceColorCode, attendDate, payment, employeeSize, ownerSalaryCalendarEmployeeGetResponseList);
-    }
 }

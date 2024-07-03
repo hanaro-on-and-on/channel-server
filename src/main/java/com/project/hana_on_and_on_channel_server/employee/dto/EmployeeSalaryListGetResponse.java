@@ -6,15 +6,6 @@ public record EmployeeSalaryListGetResponse(
         Integer year,
         Integer month,
         Integer totalPayment,
-        List<EmployeeSalaryGetResponse> employeeSalaryGetResponseList
+        List<EmployeeSalaryGetResponse> list
 ) {
-
-    public static EmployeeSalaryListGetResponse fromEntity(
-            Integer year,
-            Integer month,
-            Integer totalPayment,
-            List<EmployeeSalaryGetResponse> employeeSalaryGetResponseList
-    ){
-        return new EmployeeSalaryListGetResponse(year, month, totalPayment, employeeSalaryGetResponseList);
-    }
 }
