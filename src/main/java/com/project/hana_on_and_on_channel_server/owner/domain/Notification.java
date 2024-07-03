@@ -33,4 +33,10 @@ public class Notification extends BaseEntity {
         this.content = content;
         this.workPlace = workPlace;
     }
+
+    public Boolean update(String title, String content) {
+        this.title = title;
+        this.content = content;
+        return true;
+    }
 }

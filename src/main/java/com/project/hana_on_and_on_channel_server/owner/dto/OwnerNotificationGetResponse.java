@@ -9,7 +9,8 @@ public record OwnerNotificationGetResponse(
         Long notificationId,
         String title,
         String content,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {
     public static OwnerNotificationGetResponse fromEntity(Notification notification){
         if (notification == null) {
@@ -19,7 +20,8 @@ public record OwnerNotificationGetResponse(
                 notification.getNotificationId(),
                 notification.getTitle(),
                 notification.getContent(),
-                notification.getCreatedAt()
+                notification.getCreatedAt(),
+                notification.getUpdatedAt()
         );
     }
 }

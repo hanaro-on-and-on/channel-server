@@ -9,7 +9,8 @@ public record EmployeeNotificationRecentGetResponse(
         Long notificationId,
         String title,
         String content,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {
     public static EmployeeNotificationRecentGetResponse fromEntity(Notification notification){
         if (notification == null) {
@@ -19,7 +20,8 @@ public record EmployeeNotificationRecentGetResponse(
                 notification.getNotificationId(),
                 notification.getTitle(),
                 notification.getContent(),
-                notification.getCreatedAt()
+                notification.getCreatedAt(),
+                notification.getUpdatedAt()
         );
     }
 }

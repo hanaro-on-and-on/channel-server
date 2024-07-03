@@ -44,4 +44,10 @@ public class OwnerWorkPlaceController {
         OwnerNotificationSaveResponse response = ownerService.saveNotification(userId, workPlaceId, dto);
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/{workPlaceId}/notifications/{notificationId}")
+    public ResponseEntity<OwnerNotificationEditResponse> editNotification(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceId, @PathVariable Long notificationId, @RequestBody OwnerNotificationEditRequest dto) {
+        OwnerNotificationEditResponse response = ownerService.editNotification(userId, workPlaceId, notificationId, dto);
+        return ResponseEntity.ok(response);
+    }
 }
