@@ -7,6 +7,7 @@ import com.project.hana_on_and_on_channel_server.employee.domain.CustomAttendanc
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
 import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
 import com.project.hana_on_and_on_channel_server.employee.dto.*;
+import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceInvalidException;
 import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeDuplicatedException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
@@ -14,10 +15,15 @@ import com.project.hana_on_and_on_channel_server.employee.repository.CustomAtten
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomWorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
+import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
+import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeInvalidException;
+import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
+import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
+import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.domain.PayStub;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
@@ -57,8 +63,8 @@ public class EmployeeService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public EmployeeAccountUpsertResponse registerEmployeeAccount(Long userId, EmployeeAccountRegRequest employeeAccountRegRequest){
-        // employee 존재 여부 확인
+    public EmployeeAccountUpsertResponse registerEmployeeAccount(Long userId, EmployeeAccountRegRequest dto){
+        // 이미 employee 존재 시 가입 X
         employeeRepository.findByUserId(userId).ifPresent(employee -> {
             throw new EmployeeDuplicatedException();
         });
@@ -66,16 +72,16 @@ public class EmployeeService {
         // employee 등록
         Employee employee = employeeRepository.save(Employee.builder()
                 .userId(userId)
-                .accountNumber(employeeAccountRegRequest.accountNumber())
-                .employeeNm(employeeAccountRegRequest.employeeNm())
+                .accountNumber(dto.accountNumber())
+                .employeeNm(dto.employeeNm())
                 .build());
         return EmployeeAccountUpsertResponse.fromEntity(employee);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void updateEmployeeAccount(Long userId, EmployeeAccountUpsertRequest employeeAccountUpsertRequest){
+    public void updateEmployeeAccount(Long userId, EmployeeAccountUpsertRequest dto){
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
-        employee.registerAccountNumber(employeeAccountUpsertRequest.accountNumber());
+        employee.registerAccountNumber(dto.accountNumber());
     }
 
     @Transactional(readOnly = true)
@@ -119,15 +125,15 @@ public class EmployeeService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public EmployeeWorkPlaceCustomCreateResponse createCustomWorkPlaces(Long userId, EmployeeWorkPlaceCustomCreateRequest employeeWorkPlaceCustomCreateRequest) {
+    public EmployeeWorkPlaceCustomCreateResponse createCustomWorkPlaces(Long userId, EmployeeWorkPlaceCustomCreateRequest dto) {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
         // customWorkPlace 등록
         CustomWorkPlace customWorkPlace = customWorkPlaceRepository.save(CustomWorkPlace.builder()
                         .employee(employee)
-                        .customWorkPlaceNm(employeeWorkPlaceCustomCreateRequest.customWorkPlaceNm())
-                        .payPerHour(employeeWorkPlaceCustomCreateRequest.payPerHour())
+                        .customWorkPlaceNm(dto.customWorkPlaceNm())
+                        .payPerHour(dto.payPerHour())
                 .build());
         return EmployeeWorkPlaceCustomCreateResponse.fromEntity(customWorkPlace);
     }
@@ -137,7 +143,9 @@ public class EmployeeService {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
-        // TODO employee에 연결된 workPlace가 맞는지 검증
+        // employee가 근무하는 workPlace가 맞는지 검증
+        workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceIdAndEmployeeEmployeeId(workPlaceId, employee.getEmployeeId())
+                .orElseThrow(WorkPlaceEmployeeInvalidException::new);
 
         Notification notification = notificationRepository.findTop1ByWorkPlaceWorkPlaceIdOrderByCreatedAtDesc(workPlaceId)
                 .orElse(null);
@@ -151,10 +159,13 @@ public class EmployeeService {
         // employee 존재 여부 확인
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
 
-        // TODO 연결된 곳이 맞는지 확인
-
         CustomWorkPlace customWorkPlace = customWorkPlaceRepository.findById(dto.customWorkPlaceId())
                 .orElseThrow(CustomWorkPlaceNotFoundException::new);
+
+        // employee가 근무하는 customWorkPlace가 맞는지 검증
+        if (employee != customWorkPlace.getEmployee()) {
+            throw new CustomWorkPlaceInvalidException();
+        }
 
         // CustomAttendanceMemo 생성
         CustomAttendanceMemo customAttendanceMemo = customAttendanceMemoRepository.save(CustomAttendanceMemo.builder()
@@ -181,56 +192,46 @@ public class EmployeeService {
         // attendance + CustomAttendanceMemo
         List<EmployeeSalaryGetResponse> employeeSalaryGetResponseList = new ArrayList<>();
 
-        // 연결근무지 : attendance 모두 찾기
+        // 1. 연결근무지 : attendance 모두 찾기
         List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployee(employee);
 
         for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
-            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateStartingWith(
-                    workPlaceEmployee, searchDate
-            );
+            List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateStartingWith(workPlaceEmployee, searchDate);
 
             int payment = attendanceList.stream()
-                    .mapToInt(attendance -> calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour()))
-                    .sum();
+                    .mapToInt(attendance -> calculateDailyPayment(
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
+                            attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealEndTime() : attendance.getEndTime(),
+                            attendance.getRestMinute(),
+                            attendance.getPayPerHour()
+                            )
+                    ).sum();
 
             PayStub payStub = payStubRepository.findByWorkPlaceEmployeeIdAndYearAndMonth(workPlaceEmployee.getWorkPlaceEmployeeId(), year, month)
                             .orElse(null);
 
             employeeSalaryGetResponseList.add(
-                    new EmployeeSalaryGetResponse(
-                            true,
-                            workPlaceEmployee.getWorkPlaceEmployeeId(),
-                            workPlaceEmployee.getEmployeeStatus() == EmployeeStatus.QUIT,
-                            workPlaceEmployee.getWorkPlace().getWorkPlaceNm(),
-                            workPlaceEmployee.getColorType(),
-                            payment,
-                            payStub == null ? null : payStub.getPayStubId()
-                    )
+                    EmployeeSalaryGetResponse.fromEntity(workPlaceEmployee, payStub, payment)
             );
         }
 
-        // 수동근무지 : CustomAttendanceMemo 모두 찾기
+        // 2. 수동근무지 : CustomAttendanceMemo 모두 찾기
         List<CustomWorkPlace> customWorkPlaceList = customWorkPlaceRepository.findByEmployee(employee);
 
         for (CustomWorkPlace customWorkPlace : customWorkPlaceList) {
-            List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAndAttendDateStartingWith(
-                    customWorkPlace, searchDate
-            );
+            List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAndAttendDateStartingWith(customWorkPlace, searchDate);
 
             int payment = customAttendanceMemoList.stream()
-                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getRestMinute(), customAttendanceMemo.getPayPerHour()))
-                    .sum();
+                    .mapToInt(customAttendanceMemo -> calculateDailyPayment(
+                            customAttendanceMemo.getStartTime(),
+                            customAttendanceMemo.getEndTime(),
+                            customAttendanceMemo.getRestMinute(),
+                            customAttendanceMemo.getPayPerHour()
+                            )
+                    ).sum();
 
             employeeSalaryGetResponseList.add(
-                    new EmployeeSalaryGetResponse(
-                            false,
-                            customWorkPlace.getCustomWorkPlaceId(),
-                            customWorkPlace.getEmployeeStatus() == EmployeeStatus.QUIT,
-                            customWorkPlace.getCustomWorkPlaceNm(),
-                            customWorkPlace.getColorType(),
-                            payment,
-                            null
-                    )
+                    EmployeeSalaryGetResponse.fromEntity(customWorkPlace, payment)
             );
         }
 
@@ -269,26 +270,19 @@ public class EmployeeService {
             );
 
             for (Attendance attendance : attendanceList) {
-                AttendanceType attendanceType = attendance.getAttendanceType();
-                int payment = calculateDailyPayment(attendance.getRealStartTime(), attendance.getRealEndTime(), attendance.getRestMinute(), attendance.getPayPerHour());
+                int payment = calculateDailyPayment(
+                        attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
+                        attendance.getAttendanceType() == AttendanceType.REAL ? attendance.getRealEndTime() : attendance.getEndTime(),
+                        attendance.getRestMinute(),
+                        attendance.getPayPerHour()
+                );
                 if (attendance.getAttendDate().compareTo(yesterDate) <= 0) {    // 1일~어제 까지
                     connectedCurrentPayment += payment;
                 }
                 connectedTotalPayment += payment;
 
                 employeeSalaryCalendarGetResponseList.add(
-                        new EmployeeSalaryCalendarGetResponse(
-                                true,
-                                attendance.getAttendanceId(),
-                                workPlaceEmployee.getWorkPlace().getWorkPlaceNm(),
-                                workPlaceEmployee.getColorType().getCode(),
-                                attendance.getAttendDate(),
-                                attendanceType,
-                                attendanceType == AttendanceType.REAL ? attendance.getRealStartTime() : attendance.getStartTime(),
-                                attendanceType == AttendanceType.REAL ? attendance.getRealEndTime() : attendance.getEndTime(),
-                                attendance.getRestMinute(),
-                                payment
-                        )
+                        EmployeeSalaryCalendarGetResponse.fromEntity(workPlaceEmployee, attendance, payment)
                 );
             }
         }
@@ -302,7 +296,12 @@ public class EmployeeService {
             );
 
             for (CustomAttendanceMemo customAttendanceMemo : customAttendanceMemoList) {
-                int payment = calculateDailyPayment(customAttendanceMemo.getStartTime(), customAttendanceMemo.getEndTime(), customAttendanceMemo.getRestMinute(), customAttendanceMemo.getPayPerHour());
+                int payment = calculateDailyPayment(
+                        customAttendanceMemo.getStartTime(),
+                        customAttendanceMemo.getEndTime(),
+                        customAttendanceMemo.getRestMinute(),
+                        customAttendanceMemo.getPayPerHour()
+                );
                 if (customAttendanceMemo.getAttendDate().compareTo(yesterDate) <= 0) {    // 1일~어제 까지
                     notConnectedCurrentPayment += payment;
                 }
