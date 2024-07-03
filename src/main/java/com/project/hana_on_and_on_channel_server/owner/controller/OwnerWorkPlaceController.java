@@ -50,4 +50,10 @@ public class OwnerWorkPlaceController {
         OwnerNotificationEditResponse response = ownerService.editNotification(userId, workPlaceId, notificationId, dto);
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{workPlaceId}/notifications/{notificationId}")
+    public ResponseEntity<OwnerNotificationRemoveResponse> removeNotification(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceId, @PathVariable Long notificationId) {
+        OwnerNotificationRemoveResponse response = ownerService.removeNotification(userId, workPlaceId, notificationId);
+        return ResponseEntity.ok(response);
+    }
 }

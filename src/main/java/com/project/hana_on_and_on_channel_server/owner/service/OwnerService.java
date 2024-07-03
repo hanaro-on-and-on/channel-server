@@ -192,11 +192,34 @@ public class OwnerService {
             throw new WorkPlaceEmployeeInvalidException();
         }
 
+        // notification 존재 여부 확인
         Notification notification = notificationRepository.findById(notificationId).orElseThrow(NotificationNotFoundException::new);
 
         Boolean success = notification.update(dto.title(), dto.content());
 
         return new OwnerNotificationEditResponse(success);
+    }
+
+    @Transactional
+    public OwnerNotificationRemoveResponse removeNotification(Long userId, Long workPlaceId, Long notificationId) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        // workPlace 존재 여부 확인
+        WorkPlace workPlace = workPlaceRepository.findById(workPlaceId)
+                .orElseThrow(WorkPlaceNotFoundException::new);
+
+        // owner가 소유한 workPlace가 맞는지 검증
+        if (owner != workPlace.getOwner()) {
+            throw new WorkPlaceEmployeeInvalidException();
+        }
+
+        // notification 존재 여부 확인
+        Notification notification = notificationRepository.findById(notificationId).orElseThrow(NotificationNotFoundException::new);
+
+        // 삭제
+        notificationRepository.delete(notification);
+        return new OwnerNotificationRemoveResponse(true);
     }
 
     @Transactional(readOnly = true)
