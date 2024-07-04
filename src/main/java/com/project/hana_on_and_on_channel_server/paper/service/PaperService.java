@@ -369,9 +369,15 @@ public class PaperService {
         return SalaryTransferReserveResponse.fromEntity(savedSalaryTransferReserve);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void executeMonthlyPayStubGeneration(){
+        List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmploymentStatusTypeCd(EmployeeStatus.WORKING);
+
+        workPlaceEmployeeList.forEach(this::createPayStub);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void createPayStub(WorkPlaceEmployee workPlaceEmployee){
-        // TODO 스케줄러 작성 (매달 1일마다 실행되도록)
-        
         EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(workPlaceEmployee)
                 .orElseThrow(EmploymentContractNotFoundException::new);
 
