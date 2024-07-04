@@ -82,4 +82,10 @@ public class PaperController {
         PayStubSignResponse response = paperService.signPayStub(userId, payStubId);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/pay-stubs/{payStubId}/reservation")
+    public ResponseEntity<SalaryTransferReserveResponse> reservePayStub(@AuthenticationPrincipal Long userId, @PathVariable Long payStubId, @RequestBody SalaryTransferReserveRequest dto){
+        SalaryTransferReserveResponse response = paperService.reservePayStub(userId, payStubId, dto);
+        return ResponseEntity.ok(response);
+    }
 }

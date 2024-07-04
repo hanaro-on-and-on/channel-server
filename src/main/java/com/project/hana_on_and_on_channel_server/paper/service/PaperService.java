@@ -20,19 +20,17 @@ import com.project.hana_on_and_on_channel_server.owner.exception.OwnerInvalidExc
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeInvalidException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
+import com.project.hana_on_and_on_channel_server.paper.domain.*;
 import com.project.hana_on_and_on_channel_server.paper.dto.PaperWorkPlaceGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
-import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
-import com.project.hana_on_and_on_channel_server.paper.domain.PayStub;
-import com.project.hana_on_and_on_channel_server.paper.domain.TotalHours;
-import com.project.hana_on_and_on_channel_server.paper.domain.WorkTime;
 import com.project.hana_on_and_on_channel_server.paper.domain.enumType.PayStubStatus;
 import com.project.hana_on_and_on_channel_server.paper.dto.*;
 import com.project.hana_on_and_on_channel_server.paper.exception.*;
 import com.project.hana_on_and_on_channel_server.paper.projection.EmploymentContractSummary;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.PayStubRepository;
+import com.project.hana_on_and_on_channel_server.paper.repository.SalaryTransferReserveRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.WorkTimeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,6 +44,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil.localDateTimeToYMDFormat;
+
 @Service
 @RequiredArgsConstructor
 public class PaperService {
@@ -58,6 +58,7 @@ public class PaperService {
     private final CustomWorkPlaceRepository customWorkPlaceRepository;
     private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
     private final WorkPlaceRepository workPlaceRepository;
+    private final SalaryTransferReserveRepository salaryTransferReserveRepository;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public List<EmploymentContractListGetResponse> findEmploymentContractList (Long userId){
@@ -334,6 +335,38 @@ public class PaperService {
         payStub.registerSign();
 
         return new PayStubSignResponse(payStubId);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public SalaryTransferReserveResponse reservePayStub(Long userId, Long payStubId, SalaryTransferReserveRequest request){
+        PayStub payStub = payStubRepository.findById(payStubId).orElseThrow(PayStubNotFoundException::new);
+
+        // 사장님이 아닐 경우 예외 처리
+        if(userId != payStub.getWorkPlaceEmployee().getWorkPlace().getOwner().getUserId()){
+            throw new PayStubInvalidException(payStubId);
+        }
+
+        // 지급 상태 READY가 아닐 경우 예외 처리
+        if(payStub.getStatus()!=PayStubStatus.READY){
+            throw new PayStubInvalidException(payStubId);
+        }
+
+        // 근로계약서에서 월급날 가져오기
+        EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(payStub.getWorkPlaceEmployee()).orElseThrow(EmployeeNotFoundException::new);
+        LocalDateTime reserveDate = LocalDate.of(LocalDate.now().getYear(), LocalDate.now().getMonth(), Math.toIntExact(employmentContract.getPaymentDay())).atStartOfDay();
+        SalaryTransferReserve savedSalaryTransferReserve = salaryTransferReserveRepository.save(
+                SalaryTransferReserve.builder()
+                        .payStub(payStub)
+                        .totalPay(payStub.calcTotalPay()-payStub.calcTotalTaxPay(0.094))
+                        .reserveDate(localDateTimeToYMDFormat(reserveDate))
+                        .senderNm(request.senderNm())
+                        .receiverNm(request.receiverNm())
+                        .build()
+        );
+
+        payStub.reserveTransfer();
+
+        return SalaryTransferReserveResponse.fromEntity(savedSalaryTransferReserve);
     }
 
     private void createPayStub(WorkPlaceEmployee workPlaceEmployee){
