@@ -9,7 +9,7 @@ import java.util.List;
 public record AttendanceWorkPlaceGetResponse(
         Long workPlaceEmployeeId,
         String workPlaceName,
-        ColorType colorTypeCd,
+        String colorTypeCd,
         GeoPoint location,
         List<WorkTimeGetResponse> workTime,
         List<NotificationGetResponse> notice

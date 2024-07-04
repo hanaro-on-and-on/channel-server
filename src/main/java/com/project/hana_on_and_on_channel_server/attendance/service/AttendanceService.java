@@ -150,7 +150,7 @@ public class AttendanceService {
         return new AttendanceWorkPlaceGetResponse(
                 workPlaceEmployee.getWorkPlaceEmployeeId(),
                 workPlace.getWorkPlaceNm(),
-                workPlace.getColorType(),
+                workPlace.getColorType().getCode(),
                 new GeoPoint((workPlace.getLocation())),
                 workTime.stream().map(WorkTimeGetResponse::fromEntity).toList(),
                 notification.stream().map(NotificationGetResponse::fromEntity).toList()
