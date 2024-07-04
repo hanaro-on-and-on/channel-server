@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URISyntaxException;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/owner/work-places")
@@ -18,6 +20,12 @@ public class OwnerWorkPlaceController {
     @PostMapping
     public ResponseEntity<OwnerWorkPlaceUpsertResponse> saveWorkPlace(@RequestBody OwnerWorkPlaceUpsertRequest dto) {
         OwnerWorkPlaceUpsertResponse response = ownerService.saveWorkPlace(dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/valid/registration-number")
+    public ResponseEntity<OwnerWorkPlaceCheckRegistrationNumberResponse> checkRegistrationNumber(@RequestBody OwnerWorkPlaceCheckRegistrationNumberRequest dto) throws URISyntaxException {
+        OwnerWorkPlaceCheckRegistrationNumberResponse response = ownerService.checkRegistrationNumber(dto);
         return ResponseEntity.ok(response);
     }
 
