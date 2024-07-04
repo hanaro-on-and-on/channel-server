@@ -59,6 +59,18 @@ public class PaperController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{workPlaceEmployeeId}/attendance")
+    public ResponseEntity<MonthlyAttendanceGetResponse> getMonthlyAttendance(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceEmployeeId, @RequestParam int year, @RequestParam int month){
+        MonthlyAttendanceGetResponse response = paperService.getMonthlyAttendance(userId, workPlaceEmployeeId, year, month);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/custom/{customWorkPlaceId}/attendance")
+    public ResponseEntity<MonthlyAttendanceGetResponse> getMonthlyCustomAttendance(@AuthenticationPrincipal Long userId, @PathVariable Long customWorkPlaceId, @RequestParam int year, @RequestParam int month){
+        MonthlyAttendanceGetResponse response = paperService.getMonthlyCustomAttendance(userId, customWorkPlaceId, year, month);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/custom/{customWorkPlaceId}/pay-stubs")
     public ResponseEntity<MonthlyPayStubGetResponse> getMonthlyPayStubWithCustomAttendance(@AuthenticationPrincipal Long userId, @PathVariable Long customWorkPlaceId, @RequestParam int year, @RequestParam int month){
         MonthlyPayStubGetResponse response = paperService.getMonthlyPayStubWithCustomAttendance(userId, customWorkPlaceId, year, month);
@@ -68,6 +80,12 @@ public class PaperController {
     @PostMapping("/pay-stubs/{payStubId}/e-sign")
     public ResponseEntity<PayStubSignResponse> signPayStub(@AuthenticationPrincipal Long userId, @PathVariable Long payStubId){
         PayStubSignResponse response = paperService.signPayStub(userId, payStubId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/pay-stubs/{payStubId}/reservation")
+    public ResponseEntity<SalaryTransferReserveResponse> reservePayStub(@AuthenticationPrincipal Long userId, @PathVariable Long payStubId, @RequestBody SalaryTransferReserveRequest dto){
+        SalaryTransferReserveResponse response = paperService.reservePayStub(userId, payStubId, dto);
         return ResponseEntity.ok(response);
     }
 }

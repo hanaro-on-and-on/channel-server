@@ -22,30 +22,47 @@ public class SalaryTransferReserve extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "salary_transfer_reserve_id")
     private Long salaryTransferReserveId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pay_stub_id")
     private PayStub payStub;
 
-    @Column(nullable = false)
-    private Long basicPay;
+    @Column(nullable = false, name = "total_pay")
+    private Long totalPay;
 
-    @Column(nullable = false)
-    private Long overPay;
-
-    @Column(nullable = false)
-    private Long tax;
-
-    @Column(nullable = false)
+    @Column(nullable = false, name = "reserve_date")
     private String reserveDate;
 
+    @Column(nullable = false, name = "sender_nm")
+    private String senderNm;
+
+    @Column(nullable = false, name = "sender_account_number")
+    private String senderAccountNumber;
+
+    @Column(nullable = false, name = "receiver_nm")
+    private String receiverNm;
+
+    @Column(nullable = false, name = "receiver_account_number")
+    private String receiverAccountNumber;
+
+    @Column(nullable = false, name = "transfer_yn")
+    private Boolean transferYn;
+
+    public void completeTransfer(){
+        this.transferYn = Boolean.TRUE;
+    }
+
     @Builder
-    public SalaryTransferReserve(PayStub payStub, Long basicPay, Long overPay, Long tax, String reserveDate) {
+    public SalaryTransferReserve(PayStub payStub, Long totalPay, String reserveDate, String senderNm, String senderAccountNumber, String receiverNm, String receiverAccountNumber) {
         this.payStub = payStub;
-        this.basicPay = basicPay;
-        this.overPay = overPay;
-        this.tax = tax;
+        this.totalPay = totalPay;
         this.reserveDate = reserveDate;
+        this.senderNm = senderNm;
+        this.senderAccountNumber = senderAccountNumber;
+        this.receiverNm = receiverNm;
+        this.receiverAccountNumber = receiverAccountNumber;
+        this.transferYn = Boolean.FALSE;
     }
 }

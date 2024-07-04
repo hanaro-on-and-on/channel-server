@@ -15,11 +15,20 @@ import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRe
 import com.project.hana_on_and_on_channel_server.owner.repository.OwnerRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
+import com.project.hana_on_and_on_channel_server.owner.vo.BusinessInfoList;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -36,6 +45,9 @@ public class OwnerService {
     private final AttendanceRepository attendanceRepository;
     private final WorkPlaceRepository workPlaceRepository;
     private final NotificationRepository notificationRepository;
+
+    @Value("${api.odcloud.service-key}")
+    private String serviceKey;
 
     @Transactional(readOnly = true)
     public OwnerAccountGetResponse getOwnerAccount(Long userId) {
@@ -90,6 +102,25 @@ public class OwnerService {
         );
 
         return OwnerWorkPlaceUpsertResponse.fromEntity(workPlace);
+    }
+
+    public OwnerWorkPlaceCheckRegistrationNumberResponse checkRegistrationNumber(OwnerWorkPlaceCheckRegistrationNumberRequest dto) throws URISyntaxException {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("b_no", new String[]{dto.businessRegistrationNumber()});
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        headers.set("Accept", "application/json");
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<BusinessInfoList> businessInfoList = restTemplate.exchange(
+                new URI("https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey="+serviceKey),
+                HttpMethod.POST,
+                requestEntity,
+                BusinessInfoList.class
+        );
+
+        return OwnerWorkPlaceCheckRegistrationNumberResponse.fromEntity(businessInfoList.getBody());
     }
 
     @Transactional(readOnly = true)

@@ -65,9 +65,17 @@ public class PayStub {
         return this.weeklyHolidayTime * this.payPerHour;
     }
 
+    public void reserveTransfer(){
+        this.status = PayStubStatus.SIGN;
+    }
+
     public void registerSign(){
         this.status = PayStubStatus.WAITING;
         this.employeeSign = Boolean.TRUE;
+    }
+
+    public void completeTransfer(){
+        this.status = PayStubStatus.COMPLETED;
     }
 
     @Builder

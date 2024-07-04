@@ -1,11 +1,13 @@
 package com.project.hana_on_and_on_channel_server.paper.service;
 
+import com.project.hana_on_and_on_channel_server.account.service.AccountService;
 import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
 import com.project.hana_on_and_on_channel_server.attendance.domain.enumType.AttendanceType;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomAttendanceMemo;
 import com.project.hana_on_and_on_channel_server.employee.domain.CustomWorkPlace;
 import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
+import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceInvalidException;
 import com.project.hana_on_and_on_channel_server.employee.exception.CustomWorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeInvalidException;
 import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotFoundException;
@@ -16,23 +18,23 @@ import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
 import com.project.hana_on_and_on_channel_server.owner.exception.OwnerInvalidException;
+import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeInvalidException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
+import com.project.hana_on_and_on_channel_server.paper.domain.*;
 import com.project.hana_on_and_on_channel_server.paper.dto.PaperWorkPlaceGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
-import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
-import com.project.hana_on_and_on_channel_server.paper.domain.PayStub;
-import com.project.hana_on_and_on_channel_server.paper.domain.TotalHours;
-import com.project.hana_on_and_on_channel_server.paper.domain.WorkTime;
 import com.project.hana_on_and_on_channel_server.paper.domain.enumType.PayStubStatus;
 import com.project.hana_on_and_on_channel_server.paper.dto.*;
 import com.project.hana_on_and_on_channel_server.paper.exception.*;
 import com.project.hana_on_and_on_channel_server.paper.projection.EmploymentContractSummary;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.PayStubRepository;
+import com.project.hana_on_and_on_channel_server.paper.repository.SalaryTransferReserveRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.WorkTimeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +45,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil.localDateTimeToYMDFormat;
 
 @Service
 @RequiredArgsConstructor
@@ -56,6 +60,9 @@ public class PaperService {
     private final CustomWorkPlaceRepository customWorkPlaceRepository;
     private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
     private final WorkPlaceRepository workPlaceRepository;
+    private final SalaryTransferReserveRepository salaryTransferReserveRepository;
+
+    private final AccountService accountService;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public List<EmploymentContractListGetResponse> findEmploymentContractList (Long userId){
@@ -242,6 +249,43 @@ public class PaperService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
+    public MonthlyAttendanceGetResponse getMonthlyAttendance(Long userId, Long workPlaceEmployeeId, int year, int month){
+        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId)
+                .orElseThrow(WorkPlaceNotFoundException::new);
+        WorkPlace workPlace = workPlaceEmployee.getWorkPlace();
+
+        // workPlaceEmployee와 관련된 사용자(알바생 본인, 사장님)가 아닐 경우 예외 처리
+        if(userId != workPlaceEmployee.getEmployee().getUserId() || userId != workPlace.getOwner().getUserId()){
+            throw new WorkPlaceEmployeeInvalidException(workPlaceEmployeeId);
+        }
+
+        String searchMonth = String.format("%d%02d", year, month);
+
+        List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendanceTypeAndAttendDateStartingWith(
+                workPlaceEmployee,
+                AttendanceType.REAL,
+                searchMonth
+        );
+
+        return MonthlyAttendanceGetResponse.fromAttendance(workPlace, attendanceList, year, month);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public MonthlyAttendanceGetResponse getMonthlyCustomAttendance(Long userId, Long customWorkPlaceId, int year, int month){
+        CustomWorkPlace customWorkPlace = customWorkPlaceRepository.findById(customWorkPlaceId)
+                .orElseThrow(CustomWorkPlaceNotFoundException::new);
+
+        if(userId != customWorkPlace.getEmployee().getUserId()){
+            throw new CustomWorkPlaceInvalidException(customWorkPlaceId);
+        }
+
+        String searchDate = String.format("%d%02d", year, month);
+        List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAndAttendDateStartingWith(customWorkPlace, searchDate);
+
+        return MonthlyAttendanceGetResponse.fromCustomAttendance(customWorkPlace, customAttendanceMemoList, year, month);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
     public MonthlyPayStubGetResponse getMonthlyPayStubWithCustomAttendance(Long userId, Long customWorkPlaceId, int year, int month){
         CustomWorkPlace customWorkPlace = customWorkPlaceRepository.findById(customWorkPlaceId).orElseThrow(CustomWorkPlaceNotFoundException::new);
 
@@ -297,9 +341,74 @@ public class PaperService {
         return new PayStubSignResponse(payStubId);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
+    public SalaryTransferReserveResponse reservePayStub(Long userId, Long payStubId, SalaryTransferReserveRequest request){
+        PayStub payStub = payStubRepository.findById(payStubId).orElseThrow(PayStubNotFoundException::new);
+
+        // 사장님이 아닐 경우 예외 처리
+        if(userId != payStub.getWorkPlaceEmployee().getWorkPlace().getOwner().getUserId()){
+            throw new PayStubInvalidException(payStubId);
+        }
+
+        // 지급 상태 READY가 아닐 경우 예외 처리
+        if(payStub.getStatus()!=PayStubStatus.READY){
+            throw new PayStubInvalidException(payStubId);
+        }
+
+        // 근로계약서에서 월급날 가져오기
+        EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(payStub.getWorkPlaceEmployee()).orElseThrow(EmployeeNotFoundException::new);
+        LocalDateTime reserveDate = LocalDate.of(LocalDate.now().getYear(), LocalDate.now().getMonth(), Math.toIntExact(employmentContract.getPaymentDay())).atStartOfDay();
+        SalaryTransferReserve savedSalaryTransferReserve = salaryTransferReserveRepository.save(
+                SalaryTransferReserve.builder()
+                        .payStub(payStub)
+                        .totalPay(payStub.calcTotalPay()-payStub.calcTotalTaxPay(0.094))
+                        .reserveDate(localDateTimeToYMDFormat(reserveDate))
+                        .senderNm(request.senderNm())
+                        .senderAccountNumber(payStub.getWorkPlaceEmployee().getWorkPlace().getOwner().getAccountNumber())
+                        .receiverNm(request.receiverNm())
+                        .receiverAccountNumber(payStub.getWorkPlaceEmployee().getEmployee().getAccountNumber())
+                        .build()
+        );
+
+        payStub.reserveTransfer();
+
+        return SalaryTransferReserveResponse.fromEntity(savedSalaryTransferReserve);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void executeTodayReservedTransfer(){
+        String todayDate = String.format("%d%02d%02d", LocalDate.now().getYear(), LocalDate.now().getMonthValue(), LocalDate.now().getDayOfMonth());
+        // 이체일: 오늘 기준 이전 날짜, 아직 이체되지 않은 예약 정보
+        List<SalaryTransferReserve> salaryTransferReserveList = salaryTransferReserveRepository.findPendingTransfersBeforeOrEqualDate(todayDate);
+        salaryTransferReserveList.forEach(this::processReservedTransfer);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private void processReservedTransfer(SalaryTransferReserve salaryTransferReserve){
+        PayStub payStub = salaryTransferReserve.getPayStub();
+
+        //급여명세서에 직원 서명 안되어있거나 지급상태가 WAITING이 아닐 경우 이체 진행 X
+        if(payStub.getEmployeeSign() == Boolean.FALSE || payStub.getStatus() != PayStubStatus.WAITING){
+            return;
+        }
+
+        ResponseEntity<Void> response = accountService.sendAccountDebitRequest(salaryTransferReserve);
+
+        // 이체 성공 시 상태 업데이트
+        if (response.getStatusCode().is2xxSuccessful()) {
+            salaryTransferReserve.completeTransfer();
+            payStub.completeTransfer();
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void executeMonthlyPayStubGeneration(){
+        List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployeeStatus(EmployeeStatus.WORKING);
+        workPlaceEmployeeList.forEach(this::createPayStub);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void createPayStub(WorkPlaceEmployee workPlaceEmployee){
-        // TODO 스케줄러 작성 (매달 1일마다 실행되도록)
-        
         EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(workPlaceEmployee)
                 .orElseThrow(EmploymentContractNotFoundException::new);
 
