@@ -14,5 +14,5 @@ public interface WorkPlaceEmployeeRepository extends JpaRepository<WorkPlaceEmpl
     Optional<WorkPlaceEmployee> findByWorkPlaceWorkPlaceIdAndEmployeeEmployeeId(Long workPlaceId, Long employeeId);
     List<WorkPlaceEmployee> findByWorkPlaceWorkPlaceIdAndEmployeeStatusEquals(Long workPlaceId, EmployeeStatus employeeStatus);
 
-    List<WorkPlaceEmployee> findByEmploymentStatusTypeCd(EmployeeStatus employeeStatus);
+    List<WorkPlaceEmployee> findByEmployeeStatus(EmployeeStatus employeeStatus);
 }

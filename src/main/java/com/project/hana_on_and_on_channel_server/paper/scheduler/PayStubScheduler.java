@@ -14,9 +14,9 @@ public class PayStubScheduler {
     /*
     * 매일 5시 예약이체 일괄 처리
     * */
-    @Scheduled(cron = "0 0 5 * * ?")  //매일 5시
+    @Scheduled(cron = "0 0 5 * * ?") // 매일 5시
     public void scheduleTransfer(){
-
+        paperService.executeTodayReservedTransfer();
     }
 
 

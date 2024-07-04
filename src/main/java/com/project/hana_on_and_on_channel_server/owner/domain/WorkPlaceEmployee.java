@@ -22,7 +22,7 @@ public class WorkPlaceEmployee extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long workPlaceEmployeeId;
 
-    @Column(name = "employment_status_type_cd")
+    @Column(name = "employee_status_type_cd")
     @Enumerated(EnumType.STRING)
     private EmployeeStatus employeeStatus;
 
