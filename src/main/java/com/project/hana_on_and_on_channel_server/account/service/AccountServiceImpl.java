@@ -1,6 +1,8 @@
 package com.project.hana_on_and_on_channel_server.account.service;
 
 import com.project.hana_on_and_on_channel_server.account.dto.AccountDebitRequest;
+import com.project.hana_on_and_on_channel_server.account.dto.UserLoginRequest;
+import com.project.hana_on_and_on_channel_server.account.dto.UserLoginResponse;
 import com.project.hana_on_and_on_channel_server.paper.domain.SalaryTransferReserve;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -34,6 +36,19 @@ public class AccountServiceImpl implements AccountService{
                 .retrieve()
                 .toBodilessEntity()
                 .doOnError(error -> logger.info("AccountDebit Failed: " + error.getMessage()))
+                .block();
+    }
+
+    public UserLoginResponse login(UserLoginRequest dto) {
+        String uri = "/users/login";
+        WebClient webClient = WebClient.create(BASE_URL);
+
+        return webClient.post()
+                .uri(BASE_URL + uri)
+                .bodyValue(dto)
+                .retrieve()
+                .bodyToMono(UserLoginResponse.class)
+                .doOnError(error -> logger.info("Login Failed: " + error.getMessage()))
                 .block();
     }
 }
