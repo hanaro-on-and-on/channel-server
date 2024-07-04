@@ -29,23 +29,28 @@ public class SalaryTransferReserve extends BaseEntity {
     private PayStub payStub;
 
     @Column(nullable = false)
-    private Long basicPay;
-
-    @Column(nullable = false)
-    private Long overPay;
-
-    @Column(nullable = false)
-    private Long tax;
+    private Long totalPay;
 
     @Column(nullable = false)
     private String reserveDate;
 
+    @Column(nullable = false)
+    private String senderNm;
+
+    @Column(nullable = false)
+    private String receiverNm;
+
+    @Column(nullable = false)
+    private Boolean transfer_yn;
+
+
     @Builder
-    public SalaryTransferReserve(PayStub payStub, Long basicPay, Long overPay, Long tax, String reserveDate) {
+    public SalaryTransferReserve(PayStub payStub, Long totalPay, String reserveDate, String senderNm, String receiverNm) {
         this.payStub = payStub;
-        this.basicPay = basicPay;
-        this.overPay = overPay;
-        this.tax = tax;
+        this.totalPay = totalPay;
         this.reserveDate = reserveDate;
+        this.senderNm = senderNm;
+        this.receiverNm = receiverNm;
+        this.transfer_yn = Boolean.FALSE;
     }
 }
