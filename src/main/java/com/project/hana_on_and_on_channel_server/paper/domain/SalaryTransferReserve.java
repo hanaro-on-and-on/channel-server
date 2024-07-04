@@ -22,35 +22,47 @@ public class SalaryTransferReserve extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "salary_transfer_reserve_id")
     private Long salaryTransferReserveId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pay_stub_id")
     private PayStub payStub;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "total_pay")
     private Long totalPay;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "reserve_date")
     private String reserveDate;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "sender_nm")
     private String senderNm;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "sender_account_number")
+    private String senderAccountNumber;
+
+    @Column(nullable = false, name = "receiver_nm")
     private String receiverNm;
 
-    @Column(nullable = false)
-    private Boolean transfer_yn;
+    @Column(nullable = false, name = "receiver_account_number")
+    private String receiverAccountNumber;
 
+    @Column(nullable = false, name = "transfer_yn")
+    private Boolean transferYn;
+
+    public void completeTransfer(){
+        this.transferYn = Boolean.TRUE;
+    }
 
     @Builder
-    public SalaryTransferReserve(PayStub payStub, Long totalPay, String reserveDate, String senderNm, String receiverNm) {
+    public SalaryTransferReserve(PayStub payStub, Long totalPay, String reserveDate, String senderNm, String senderAccountNumber, String receiverNm, String receiverAccountNumber) {
         this.payStub = payStub;
         this.totalPay = totalPay;
         this.reserveDate = reserveDate;
         this.senderNm = senderNm;
+        this.senderAccountNumber = senderAccountNumber;
         this.receiverNm = receiverNm;
-        this.transfer_yn = Boolean.FALSE;
+        this.receiverAccountNumber = receiverAccountNumber;
+        this.transferYn = Boolean.FALSE;
     }
 }

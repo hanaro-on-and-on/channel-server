@@ -1,5 +1,6 @@
 package com.project.hana_on_and_on_channel_server.paper.service;
 
+import com.project.hana_on_and_on_channel_server.account.service.AccountService;
 import com.project.hana_on_and_on_channel_server.attendance.domain.Attendance;
 import com.project.hana_on_and_on_channel_server.attendance.domain.enumType.AttendanceType;
 import com.project.hana_on_and_on_channel_server.attendance.repository.AttendanceRepository;
@@ -33,6 +34,7 @@ import com.project.hana_on_and_on_channel_server.paper.repository.PayStubReposit
 import com.project.hana_on_and_on_channel_server.paper.repository.SalaryTransferReserveRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.WorkTimeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +61,8 @@ public class PaperService {
     private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
     private final WorkPlaceRepository workPlaceRepository;
     private final SalaryTransferReserveRepository salaryTransferReserveRepository;
+
+    private final AccountService accountService;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public List<EmploymentContractListGetResponse> findEmploymentContractList (Long userId){
@@ -360,7 +364,9 @@ public class PaperService {
                         .totalPay(payStub.calcTotalPay()-payStub.calcTotalTaxPay(0.094))
                         .reserveDate(localDateTimeToYMDFormat(reserveDate))
                         .senderNm(request.senderNm())
+                        .senderAccountNumber(payStub.getWorkPlaceEmployee().getWorkPlace().getOwner().getAccountNumber())
                         .receiverNm(request.receiverNm())
+                        .receiverAccountNumber(payStub.getWorkPlaceEmployee().getEmployee().getAccountNumber())
                         .build()
         );
 
@@ -369,9 +375,40 @@ public class PaperService {
         return SalaryTransferReserveResponse.fromEntity(savedSalaryTransferReserve);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void executeTodayReservedTransfer(){
+        String todayDate = String.format("%d%02d%02d", LocalDate.now().getYear(), LocalDate.now().getMonthValue(), LocalDate.now().getDayOfMonth());
+        // 이체일: 오늘 기준 이전 날짜, 아직 이체되지 않은 예약 정보
+        List<SalaryTransferReserve> salaryTransferReserveList = salaryTransferReserveRepository.findPendingTransfersBeforeOrEqualDate(todayDate);
+        salaryTransferReserveList.forEach(this::processReservedTransfer);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private void processReservedTransfer(SalaryTransferReserve salaryTransferReserve){
+        PayStub payStub = salaryTransferReserve.getPayStub();
+
+        //급여명세서에 직원 서명 안되어있거나 지급상태가 WAITING이 아닐 경우 이체 진행 X
+        if(payStub.getEmployeeSign() == Boolean.FALSE || payStub.getStatus() != PayStubStatus.WAITING){
+            return;
+        }
+
+        ResponseEntity<Void> response = accountService.sendAccountDebitRequest(salaryTransferReserve);
+
+        // 이체 성공 시 상태 업데이트
+        if (response.getStatusCode().is2xxSuccessful()) {
+            salaryTransferReserve.completeTransfer();
+            payStub.completeTransfer();
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void executeMonthlyPayStubGeneration(){
+        List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByEmployeeStatus(EmployeeStatus.WORKING);
+        workPlaceEmployeeList.forEach(this::createPayStub);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void createPayStub(WorkPlaceEmployee workPlaceEmployee){
-        // TODO 스케줄러 작성 (매달 1일마다 실행되도록)
-        
         EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(workPlaceEmployee)
                 .orElseThrow(EmploymentContractNotFoundException::new);
 

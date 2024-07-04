@@ -74,6 +74,10 @@ public class PayStub {
         this.employeeSign = Boolean.TRUE;
     }
 
+    public void completeTransfer(){
+        this.status = PayStubStatus.COMPLETED;
+    }
+
     @Builder
     public PayStub(WorkPlaceEmployee workPlaceEmployee, Long payPerHour,
         Long basicHour, Long overHour, Long weeklyHolidayTime, BigDecimal tax) {
