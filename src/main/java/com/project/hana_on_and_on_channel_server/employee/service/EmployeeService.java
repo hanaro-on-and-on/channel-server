@@ -211,6 +211,9 @@ public class EmployeeService {
 
         for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
             List<Attendance> attendanceList = attendanceRepository.findByWorkPlaceEmployeeAndAttendDateStartingWith(workPlaceEmployee, searchDate);
+            if (attendanceList.isEmpty()) {
+                continue;   // payment 0은 제외
+            }
 
             int payment = attendanceList.stream()
                     .mapToInt(attendance -> calculateDailyPayment(
@@ -234,6 +237,9 @@ public class EmployeeService {
 
         for (CustomWorkPlace customWorkPlace : customWorkPlaceList) {
             List<CustomAttendanceMemo> customAttendanceMemoList = customAttendanceMemoRepository.findByCustomWorkPlaceAndAndAttendDateStartingWith(customWorkPlace, searchDate);
+            if (customAttendanceMemoList.isEmpty()) {
+                continue;   // payment 0은 제외
+            }
 
             int payment = customAttendanceMemoList.stream()
                     .mapToInt(customAttendanceMemo -> calculateDailyPayment(
