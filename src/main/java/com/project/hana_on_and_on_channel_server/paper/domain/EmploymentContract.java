@@ -26,6 +26,9 @@ public class EmploymentContract extends BaseEntity {
     @Column(name = "work_start_date")
     private LocalDate workStartDate;
 
+    @Column(name = "work_end_date")
+    private LocalDate workEndDate;
+
     @Column(name = "work_site")
     private String workSite;
 
@@ -73,12 +76,13 @@ public class EmploymentContract extends BaseEntity {
     }
 
     @Builder
-    public EmploymentContract(WorkPlaceEmployee workPlaceEmployee, LocalDate workStartDate, String workSite,
+    public EmploymentContract(WorkPlaceEmployee workPlaceEmployee, LocalDate workStartDate, LocalDate workEndDate, String workSite,
                               String workDetail, Long payPerHour, Long paymentDay, String employeeNm, String employeeAddress,
                               String employeePhone, String restDayOfWeek, Long otherAllowancesAmount, Long bonusAmount,
                               String otherAllowancesName, Long overtimeRate, Boolean ownerSign, Boolean employeeSign) {
         this.workPlaceEmployee = workPlaceEmployee;
         this.workStartDate = workStartDate;
+        this.workEndDate = workEndDate;
         this.workSite = workSite;
         this.workDetail = workDetail;
         this.payPerHour = payPerHour;
