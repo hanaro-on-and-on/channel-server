@@ -1,15 +1,13 @@
 #!/bin/bash
 
 REPOSITORY=/home/ec2-user/app/step2
-PROJECT_NAME=channel-server #해당 위치에 properties에 작성한 프로젝트명과 동일하게 작성합니다.
+PROJECT_NAME=channel-server
 
 echo "> Build 파일 복사"
 cp $REPOSITORY/zip/*.jar $REPOSITORY/
 
 echo "> 현재 구동 중인 애플리케이션 pid 확인"
-#CURRENT_PID=$(pgrep -f $PROJECT_NAME)
 CURRENT_PID=$(pgrep -f hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar)
-#CURRENT_PID=$(pgrep -fl $PROJECT_NAME | grep jar | awk '{print $1}')
 
 echo "현재 구동 중인 애플리케이션 pid: $CURRENT_PID"
 
@@ -22,17 +20,14 @@ else
 fi
 
 echo "> 새 애플리케이션 배포"
-#JAR_NAME=$(ls -tr $REPOSITORY/*.jar | tail -n 1)
 JAR_NAME=hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar
-#JAR_NAME=$(ls -tr $REPOSITORY/ | grep ec2- | tail -n 1)
 
 echo "> JAR_NAME: $JAR_NAME"
 echo "> $JAR_NAME 에 실행권한 추가"
 chmod +x $JAR_NAME
 
+echo "> $JAR_NAME 소유권 변경"
+sudo chown ec2-user $JAR_NAME
+
 echo "> $JAR_NAME 실행"
 nohup java -jar $JAR_NAME > $REPOSITORY/nohup.out 2>&1 &
-#nohup java -jar \
-#  -Dspring.config.location=classpath:/application.properties,/home/ec2-user/app/application-oauth.properties,/home/ec2-user/app/application-real-db.properties \
-#  -Dspring.profile.active=real \
-#  $JAR_NAME > $REPOSITORY/nohup.out 2>&1 &
