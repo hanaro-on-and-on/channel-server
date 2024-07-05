@@ -10,7 +10,6 @@ env:
   PROJECT_NAME: channel-server
   CODE_DEPLOY_APP_NAME: hana-on-and-on
   CODE_DEPLOY_GROUP_NAME: hana-on-and-on-group
-hana-on-and-on-group
 
 name: deploy
 
