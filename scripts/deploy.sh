@@ -8,7 +8,7 @@ cp $REPOSITORY/zip/*.jar $REPOSITORY/
 
 echo "> 현재 구동 중인 애플리케이션 pid 확인"
 #CURRENT_PID=$(pgrep -f $PROJECT_NAME)
-CURRENT_PID=$(pgrep -f channel-server.jar)
+CURRENT_PID=$(pgrep -f hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar)
 #CURRENT_PID=$(pgrep -fl $PROJECT_NAME | grep jar | awk '{print $1}')
 
 echo "현재 구동 중인 애플리케이션 pid: $CURRENT_PID"
@@ -23,7 +23,7 @@ fi
 
 echo "> 새 애플리케이션 배포"
 #JAR_NAME=$(ls -tr $REPOSITORY/*.jar | tail -n 1)
-JAR_NAME=$(ls -tr $REPOSITORY/*.jar|grep jar|tail -n 1)
+JAR_NAME=$(ls -tr $REPOSITORY | grep "hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar" | tail -n 1)
 #JAR_NAME=$(ls -tr $REPOSITORY/ | grep ec2- | tail -n 1)
 
 echo "> JAR_NAME: $JAR_NAME"
