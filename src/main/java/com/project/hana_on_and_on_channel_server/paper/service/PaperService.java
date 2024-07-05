@@ -44,7 +44,9 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil.localDateTimeToYMDFormat;
 
@@ -128,9 +130,11 @@ public class PaperService {
         EmploymentContract employmentContract = EmploymentContract.builder()
                 .workPlaceEmployee(workPlaceEmployee)
                 .workStartDate(request.workStartDate()) //TODO LocalDateTime LocalTime 등 맞추기
+                .workEndDate(request.workEndDate())
                 .workSite(request.workSite())
                 .workDetail(request.workDetail())
                 .payPerHour(request.payPerHour())
+                .paymentDay(request.paymentDay())
                 .employeeNm(request.employeeNm())
                 .employeeAddress(request.employeeAddress())
                 .employeePhone(request.employeePhone())
@@ -158,6 +162,9 @@ public class PaperService {
                         .restEndTime(LocalDateTime.of(today, workTimeRequest.restEndTime()))
                         .build())
                 .forEach(workTime -> workTimeRepository.save(workTime));
+
+        //예상근무 생성
+        createExpectedAttendance(employmentContract, employmentContract.getWorkStartDate(), employmentContract.getWorkEndDate());
 
         return new EmploymentContractUpsertResponse(employmentContract.getEmploymentContractId(), workPlaceEmployee.getWorkPlaceEmployeeId());
     }
@@ -436,6 +443,35 @@ public class PaperService {
         payStubRepository.save(payStub);
     }
 
+    private void createExpectedAttendance(EmploymentContract employmentContract, LocalDate workStartDate, LocalDate workEndDate){
+        List<WorkTime> workTimes = workTimeRepository.findByEmploymentContract(employmentContract);
+        List<Attendance> attendances = new ArrayList<>();
+
+        for (LocalDate date = workStartDate; !date.isAfter(workEndDate); date = date.plusDays(1)) {
+            String dayOfWeek = date.format(DateTimeFormatter.ofPattern("EEEE", Locale.KOREAN));
+            for (WorkTime workTime : workTimes) {
+                if (workTime.getWorkDayOfWeek().equals(dayOfWeek)) {
+                    LocalDateTime startTime = LocalDateTime.of(date, workTime.getWorkStartTime().toLocalTime());
+                    LocalDateTime endTime = LocalDateTime.of(date, workTime.getWorkEndTime().toLocalTime());
+
+                    Attendance attendance = Attendance.builder()
+                            .workPlaceEmployee(employmentContract.getWorkPlaceEmployee())
+                            .attendanceType(AttendanceType.EXPECT)
+                            .payPerHour(employmentContract.getPayPerHour())
+                            .attendDate(date.format(DateTimeFormatter.ofPattern("yyyyMMdd")))
+                            .startTime(startTime)
+                            .endTime(endTime)
+                            .restMinute(calcMinutes(workTime.getRestStartTime(), workTime.getRestEndTime()))
+                            .build();
+
+                    attendances.add(attendance);
+                }
+            }
+        }
+        attendanceRepository.saveAll(attendances);
+    }
+
+    //TODO 계산 로직 util로 빼기
     private TotalHours calcTotalHours(List<Attendance> attendanceList){
         long totalBasicHours = 0;
         long totalOverHours = 0;
@@ -456,5 +492,10 @@ public class PaperService {
         long totalWeeklyHolidayHours = totalBasicHours / 4 >= 15 ? 7 : 0;
 
         return new TotalHours(totalBasicHours, totalOverHours, totalWeeklyHolidayHours);
+    }
+
+    public static int calcMinutes(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        Duration duration = Duration.between(startDateTime, endDateTime);
+        return (int) duration.toMinutes();
     }
 }

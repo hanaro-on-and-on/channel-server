@@ -12,6 +12,7 @@ public record EmploymentContractUpsertRequest(
         String employeeAddress,
         String employeePhone,
         LocalDate workStartDate,
+        LocalDate workEndDate,
         String workSite,
         String workDetail,
         List<WorkTimeRequest> workTimes,

@@ -1,6 +1,7 @@
 package com.project.hana_on_and_on_channel_server.account.service;
 
 import com.project.hana_on_and_on_channel_server.account.dto.AccountDebitRequest;
+import com.project.hana_on_and_on_channel_server.account.dto.AccountGetResponse;
 import com.project.hana_on_and_on_channel_server.account.dto.UserLoginRequest;
 import com.project.hana_on_and_on_channel_server.account.dto.UserLoginResponse;
 import com.project.hana_on_and_on_channel_server.paper.domain.SalaryTransferReserve;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.List;
 
 
 /**
@@ -49,6 +52,17 @@ public class AccountServiceImpl implements AccountService{
                 .retrieve()
                 .bodyToMono(UserLoginResponse.class)
                 .doOnError(error -> logger.info("Login Failed: " + error.getMessage()))
+                .block();
+    }
+
+    public List<AccountGetResponse> findAccountList(Long userId){
+        String uri = "/accounts/" + userId;
+        WebClient webClient = WebClient.create(BASE_URL);
+        return webClient.get()
+                .uri(BASE_URL + uri)
+                .retrieve()
+                .bodyToFlux(AccountGetResponse.class)
+                .collectList()
                 .block();
     }
 }
