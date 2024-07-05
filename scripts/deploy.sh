@@ -23,7 +23,7 @@ fi
 
 echo "> 새 애플리케이션 배포"
 #JAR_NAME=$(ls -tr $REPOSITORY/*.jar | tail -n 1)
-JAR_NAME=$(ls -tr $REPOSITORY | grep "hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar" | tail -n 1)
+JAR_NAME=hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar
 #JAR_NAME=$(ls -tr $REPOSITORY/ | grep ec2- | tail -n 1)
 
 echo "> JAR_NAME: $JAR_NAME"
