@@ -15,7 +15,7 @@ import static com.project.hana_on_and_on_channel_server.attendance.service.Atten
 public record MonthlyAttendanceGetResponse(
         Long year,
         Long month,
-        Long PlaceId,
+        Long workPlaceId,
         String workPlaceNm,
         ColorType colorTypeCd,
         Integer totalPayPerMonth,
