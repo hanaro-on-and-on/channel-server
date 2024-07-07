@@ -1,6 +1,7 @@
 package com.project.hana_on_and_on_channel_server.employee.domain;
 
 import com.project.hana_on_and_on_channel_server.common.domain.BaseEntity;
+import com.project.hana_on_and_on_channel_server.common.util.ColorTypeUtil;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.ColorType;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
 import jakarta.persistence.*;
@@ -37,5 +38,6 @@ public class CustomWorkPlace extends BaseEntity {
         this.employee = employee;
         this.customWorkPlaceNm = customWorkPlaceNm;
         this.payPerHour = payPerHour;
+        this.colorType = ColorTypeUtil.getRandomColorType();
     }
 }
