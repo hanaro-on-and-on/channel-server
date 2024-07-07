@@ -33,11 +33,18 @@ public class CustomWorkPlace extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private ColorType colorType;
 
+    @Column(name = "employment_status_type_cd")
+    @Enumerated(EnumType.STRING)
+    private EmployeeStatus employeeStatus;
+
+
+
     @Builder
     public CustomWorkPlace(Employee employee, String customWorkPlaceNm, Long payPerHour) {
         this.employee = employee;
         this.customWorkPlaceNm = customWorkPlaceNm;
         this.payPerHour = payPerHour;
         this.colorType = ColorTypeUtil.getRandomColorType();
+        this.employeeStatus = EmployeeStatus.WORKING;
     }
 }
