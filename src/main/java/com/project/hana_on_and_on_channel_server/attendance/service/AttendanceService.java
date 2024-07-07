@@ -63,9 +63,10 @@ public class AttendanceService {
 
         if (attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 500.0, dto.workPlaceEmployeeId())) {
             attendance.checkIn(LocalDateTime.now());
+            return AttendanceCheckInResponse.fromEntity(attendance, true);
         }
 
-        return AttendanceCheckInResponse.fromEntity(attendance);
+        return AttendanceCheckInResponse.fromEntity(attendance, false);
     }
 
 
@@ -104,6 +105,7 @@ public class AttendanceService {
     @Transactional(propagation = Propagation.REQUIRED)
     public AttendanceTodayListGetResponse getTodayAttendanceList(Long userId){
         String dayOfWeek = localDateTimeToTodayOfWeekFormat(LocalDateTime.now());
+        System.out.println("dayOfWeek = " + dayOfWeek);
 
         //현재 근무중인 최신 근로계약서 목록 가져오기
         List<Long> latestEmploymentContractList = attendanceRepository.findLatestEmploymentContractList(userId);
@@ -136,9 +138,9 @@ public class AttendanceService {
                 .orElseThrow(WorkPlaceEmployeeNotFoundException::new);
 
         //사용자 검증
-        if(userId != workPlaceEmployee.getEmployee().getUserId()){
-            throw  new WorkPlaceEmployeeInvalidException();
-        }
+//        if(userId != workPlaceEmployee.getEmployee().getUserId()){
+//            throw  new WorkPlaceEmployeeInvalidException();
+//        }
 
         EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(workPlaceEmployee)
                 .orElseThrow(EmployeeNotFoundException::new);
