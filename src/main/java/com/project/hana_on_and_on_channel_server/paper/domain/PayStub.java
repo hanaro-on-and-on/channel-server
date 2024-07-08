@@ -31,12 +31,6 @@ public class PayStub {
     private Long payPerHour;
 
     @Column(nullable = false)
-    private Long basicHour;
-
-    @Column(nullable = false)
-    private Long overHour;
-
-    @Column(nullable = false)
     private Boolean employeeSign;
 
     @Column(nullable = false)
@@ -44,22 +38,6 @@ public class PayStub {
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal tax;
-
-    public Long calcTotalPay(){
-        return (long) (this.basicHour*this.payPerHour+this.overHour*this.payPerHour*1.5+this.weeklyHolidayTime*this.payPerHour);
-    }
-
-    public Long calcTotalTaxPay(double taxRate){
-        return (long)Math.floor(this.calcTotalPay()*taxRate);
-    }
-
-    public Long calcBasicPay(){
-        return this.basicHour * this.payPerHour;
-    }
-
-    public Long calcOverPay(double overTimeRate){
-        return (long)(this.overHour * this.payPerHour * overTimeRate);
-    }
 
     public Long calcWeeklyHolidayPay(){
         return this.weeklyHolidayTime * this.payPerHour;
@@ -79,13 +57,10 @@ public class PayStub {
     }
 
     @Builder
-    public PayStub(WorkPlaceEmployee workPlaceEmployee, Long payPerHour,
-        Long basicHour, Long overHour, Long weeklyHolidayTime, BigDecimal tax) {
+    public PayStub(WorkPlaceEmployee workPlaceEmployee, Long payPerHour, Long weeklyHolidayTime, BigDecimal tax) {
         this.workPlaceEmployee = workPlaceEmployee;
         this.status = PayStubStatus.READY;
         this.payPerHour = payPerHour;
-        this.basicHour = basicHour;
-        this.overHour = overHour;
         this.employeeSign = Boolean.FALSE;
         this.weeklyHolidayTime = weeklyHolidayTime;
         this.tax = tax;

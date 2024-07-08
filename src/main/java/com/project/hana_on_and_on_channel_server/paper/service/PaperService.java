@@ -29,10 +29,7 @@ import com.project.hana_on_and_on_channel_server.paper.domain.enumType.PayStubSt
 import com.project.hana_on_and_on_channel_server.paper.dto.*;
 import com.project.hana_on_and_on_channel_server.paper.exception.*;
 import com.project.hana_on_and_on_channel_server.paper.projection.EmploymentContractSummary;
-import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
-import com.project.hana_on_and_on_channel_server.paper.repository.PayStubRepository;
-import com.project.hana_on_and_on_channel_server.paper.repository.SalaryTransferReserveRepository;
-import com.project.hana_on_and_on_channel_server.paper.repository.WorkTimeRepository;
+import com.project.hana_on_and_on_channel_server.paper.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -47,7 +44,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
+import static com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService.calcDailyWorkTime;
+import static com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService.calculateDailyPayment;
 import static com.project.hana_on_and_on_channel_server.common.util.LocalDateTimeUtil.localDateTimeToYMDFormat;
 
 @Service
@@ -63,6 +63,7 @@ public class PaperService {
     private final CustomAttendanceMemoRepository customAttendanceMemoRepository;
     private final WorkPlaceRepository workPlaceRepository;
     private final SalaryTransferReserveRepository salaryTransferReserveRepository;
+    private final PayStubWorkTimeRepository payStubWorkTimeRepository;
 
     private final AccountService accountService;
 
@@ -215,11 +216,32 @@ public class PaperService {
                     searchMonth
             );
 
+            List<MonthlyPayStubGetResponse.Basic> basicList = attendanceList.stream()
+                    .collect(Collectors.groupingBy(
+                            Attendance::getPayPerHour,
+                            Collectors.mapping(
+                                    attendance -> calcDailyWorkTime(attendance.getRealStartTime(), attendance.getEndTime()),
+                                    Collectors.reducing(new DailyWorkTimeGetResponse(0L, 0L),
+                                            (wt1, wt2) -> new DailyWorkTimeGetResponse(wt1.basicHour() + wt2.basicHour(), wt1.overHour() + wt2.overHour())
+                                    ))))
+                    .entrySet().stream()
+                    .map(entry -> new MonthlyPayStubGetResponse.Basic(
+                            entry.getKey(),
+                            entry.getValue().basicHour(),
+                            entry.getKey() * entry.getValue().basicHour(),
+                            entry.getValue().overHour(),
+                            Math.round(entry.getKey() * entry.getValue().overHour() * 1.5)
+                    ))
+                    .toList();
+
+
             //기본 시간, 연장 시간, 주휴시간 계산
             TotalHours totalHours = calcTotalHours(attendanceList);
-
-            Long totalPay = totalHours.calcTotalPay(payPerHour);
+            Long totalPay = basicList.stream()
+                    .mapToLong(basic -> basic.basicPay() + basic.overPay())
+                    .sum();
             Long totalTaxPay = (long)Math.floor(totalPay * 0.094);
+
 
             return MonthlyPayStubGetResponse.builder()
                     .payStubId(null)
@@ -229,8 +251,7 @@ public class PaperService {
                     .salary(totalPay - totalTaxPay)
                     .totalPay(totalPay).totalTaxPay(totalTaxPay)
                     .paymentDay(employmentContract.getPaymentDay()).payPerHour(payPerHour)
-                    .basicHour(totalHours.totalBasicHours()).basicPay(totalHours.totalBasicHours() * payPerHour)
-                    .overHour(totalHours.totalOverHours()).overPay((long)(totalHours.totalOverHours() * payPerHour * 1.5))
+                    .basic(basicList)
                     .weeklyHolidayTime(totalHours.totalWeeklyHolidayHours()).weeklyHolidayPay(totalHours.totalWeeklyHolidayHours() * payPerHour)
                     .taxRate(0.094).taxPay(totalTaxPay)
                     .build();
@@ -238,19 +259,23 @@ public class PaperService {
             // 당월 X - 급여명세서 조회
             PayStub payStub = payStubRepository.findByWorkPlaceEmployeeIdAndYearAndMonth(workPlaceEmployeeId, year, month)
                     .orElseThrow(PayStubNotFoundException::new);
+            List<PayStubWorkTime> payStubWorkTimeList = payStubWorkTimeRepository.findByPayStub(payStub);
+
+            long totalPay = payStubWorkTimeList.stream()
+                    .mapToLong(workTime -> workTime.calcTotalPay())
+                    .sum();
 
             return MonthlyPayStubGetResponse.builder()
                     .payStubId(payStub.getPayStubId())
                     .workPlaceEmployeeId(workPlaceEmployeeId)
                     .year(year).month(month)
                     .status(payStub.getStatus().toString())
-                    .salary(payStub.calcTotalPay()-payStub.calcTotalTaxPay(0.094))
-                    .totalPay(payStub.calcTotalPay()).totalTaxPay(payStub.calcTotalTaxPay(0.094))
+                    .salary((long) (totalPay-totalPay*0.094))
+                    .totalPay(totalPay).totalTaxPay((long) (totalPay*0.094))
                     .paymentDay(employmentContract.getPaymentDay()).payPerHour(payStub.getPayPerHour())
-                    .basicHour(payStub.getBasicHour()).basicPay(payStub.calcBasicPay())
-                    .overHour(payStub.getOverHour()).overPay(payStub.calcOverPay(1.5))
+                    .basic(MonthlyPayStubGetResponse.Basic.fromEntity(payStubWorkTimeList))
                     .weeklyHolidayTime(payStub.getWeeklyHolidayTime()).weeklyHolidayPay(payStub.calcWeeklyHolidayPay())
-                    .taxRate(9.4).taxPay(payStub.calcTotalTaxPay(0.094))
+                    .taxRate(9.4).taxPay((long) (totalPay*0.094))
                     .build();
         }
     }
@@ -311,9 +336,8 @@ public class PaperService {
                 .totalPay(basicHour*customWorkPlace.getPayPerHour())
                 .totalTaxPay((long)Math.floor(basicHour*customWorkPlace.getPayPerHour()*0.094))
                 .paymentDay(null).payPerHour(customWorkPlace.getPayPerHour())
-                .basicHour(basicHour)
-                .basicPay(basicHour*customWorkPlace.getPayPerHour())
-                .overHour(null).overPay(null).weeklyHolidayTime(null).weeklyHolidayPay(null)
+                .basic(null)
+                .weeklyHolidayTime(null).weeklyHolidayPay(null)
                 .taxRate(9.4).taxPay((long)Math.floor(basicHour*customWorkPlace.getPayPerHour()*0.094))
                 .build();
     }
@@ -365,10 +389,14 @@ public class PaperService {
         // 근로계약서에서 월급날 가져오기
         EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(payStub.getWorkPlaceEmployee()).orElseThrow(EmployeeNotFoundException::new);
         LocalDateTime reserveDate = LocalDate.of(LocalDate.now().getYear(), LocalDate.now().getMonth(), Math.toIntExact(employmentContract.getPaymentDay())).atStartOfDay();
+        Long totalPay = payStubWorkTimeRepository.findByPayStub(payStub).stream()
+                .mapToLong(workTime -> workTime.calcTotalPay())
+                .sum();
+
         SalaryTransferReserve savedSalaryTransferReserve = salaryTransferReserveRepository.save(
                 SalaryTransferReserve.builder()
                         .payStub(payStub)
-                        .totalPay(payStub.calcTotalPay()-payStub.calcTotalTaxPay(0.094))
+                        .totalPay((long) (totalPay-totalPay*0.094))
                         .reserveDate(localDateTimeToYMDFormat(reserveDate))
                         .senderNm(request.senderNm())
                         .senderAccountNumber(payStub.getWorkPlaceEmployee().getWorkPlace().getOwner().getAccountNumber())
@@ -431,16 +459,33 @@ public class PaperService {
 
         TotalHours totalHours = calcTotalHours(attendanceList);
 
+        // 급여명세서 생성하기
         PayStub payStub = PayStub.builder()
                 .workPlaceEmployee(workPlaceEmployee)
                 .payPerHour(employmentContract.getPayPerHour())
-                .basicHour(totalHours.totalBasicHours())
-                .overHour(totalHours.totalOverHours())
                 .weeklyHolidayTime(totalHours.totalWeeklyHolidayHours())
                 .tax(BigDecimal.valueOf(0.094))
                 .build();
 
+        List<PayStubWorkTime> payStubWorkTimeList = attendanceList.stream()
+                .collect(Collectors.groupingBy(
+                        Attendance::getPayPerHour,
+                        Collectors.mapping(
+                                attendance -> calcDailyWorkTime(attendance.getRealStartTime(), attendance.getEndTime()),
+                                Collectors.reducing(new DailyWorkTimeGetResponse(0L, 0L),
+                                        (wt1, wt2) -> new DailyWorkTimeGetResponse(wt1.basicHour() + wt2.basicHour(), wt1.overHour() + wt2.overHour())
+                                ))))
+                .entrySet().stream()
+                .map(entry -> new PayStubWorkTime(
+                        payStub,
+                        entry.getKey(),
+                        entry.getValue().basicHour(),
+                        entry.getValue().overHour()
+                ))
+                .toList();
+
         payStubRepository.save(payStub);
+        payStubWorkTimeRepository.saveAll(payStubWorkTimeList);
     }
 
     private void createExpectedAttendance(EmploymentContract employmentContract, LocalDate workStartDate, LocalDate workEndDate){

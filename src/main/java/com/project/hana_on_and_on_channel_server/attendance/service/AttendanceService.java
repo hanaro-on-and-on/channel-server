@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import com.project.hana_on_and_on_channel_server.paper.domain.EmploymentContract;
 import com.project.hana_on_and_on_channel_server.paper.domain.WorkTime;
+import com.project.hana_on_and_on_channel_server.paper.dto.DailyWorkTimeGetResponse;
 import com.project.hana_on_and_on_channel_server.paper.dto.WorkTimeGetResponse;
 import com.project.hana_on_and_on_channel_server.paper.repository.EmploymentContractRepository;
 import com.project.hana_on_and_on_channel_server.paper.repository.WorkTimeRepository;
@@ -105,6 +106,18 @@ public class AttendanceService {
         return (int) Math.floor(payment);
     }
 
+    public static DailyWorkTimeGetResponse calcDailyWorkTime(LocalDateTime startTime, LocalDateTime endTime) {
+        LocalDateTime startZeroSecondTime = LocalDateTime.of(startTime.getYear(), startTime.getMonth(), startTime.getDayOfMonth(), startTime.getHour(), startTime.getMinute(), 0);
+        LocalDateTime endZeroSecondTime = LocalDateTime.of(endTime.getYear(), endTime.getMonth(), endTime.getDayOfMonth(), endTime.getHour(), endTime.getMinute(), 0);
+        int totalDurationMinutes = (int) Duration.between(startZeroSecondTime, endZeroSecondTime).toMinutes();
+
+        long totalHours = totalDurationMinutes / 60;
+        long basicHour = Math.min(totalHours, 8);
+        long overTimeHour = Math.max(totalHours - 8, 0);
+
+        return new DailyWorkTimeGetResponse(basicHour, overTimeHour);
+    }
+
     @Transactional(propagation = Propagation.REQUIRED)
     public AttendanceTodayListGetResponse getTodayAttendanceList(Long userId){
         String dayOfWeek = localDateTimeToTodayOfWeekFormat(LocalDateTime.now());
@@ -139,10 +152,10 @@ public class AttendanceService {
         WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId)
                 .orElseThrow(WorkPlaceEmployeeNotFoundException::new);
 
-//        //사용자 검증
-//        if(userId != workPlaceEmployee.getEmployee().getUserId()){
-//            throw  new WorkPlaceEmployeeInvalidException();
-//        }
+        //사용자 검증
+        if(userId != workPlaceEmployee.getEmployee().getUserId()){
+            throw  new WorkPlaceEmployeeInvalidException();
+        }
 
         EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(workPlaceEmployee)
                 .orElseThrow(EmployeeNotFoundException::new);
