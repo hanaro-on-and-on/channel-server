@@ -17,7 +17,7 @@ public record MonthlyAttendanceGetResponse(
         Long month,
         Long PlaceId,
         String workPlaceNm,
-        ColorType colorTypeCd,
+        String colorTypeCd,
         Integer totalPayPerMonth,
         List<AttendanceTimeResponse> works
 ) {
@@ -30,7 +30,7 @@ public record MonthlyAttendanceGetResponse(
                     return dailyPayment;
                 })
                 .reduce(0, Integer::sum);
-        return new MonthlyAttendanceGetResponse((long)year, (long)month, workPlace.getWorkPlaceId(), workPlace.getWorkPlaceNm(), workPlace.getColorType(), totalPayPerMonth, works);
+        return new MonthlyAttendanceGetResponse((long)year, (long)month, workPlace.getWorkPlaceId(), workPlace.getWorkPlaceNm(), workPlace.getColorType().getCode(), totalPayPerMonth, works);
     }
 
     public static MonthlyAttendanceGetResponse fromCustomAttendance(CustomWorkPlace workPlace, List<CustomAttendanceMemo> attendanceList, int year, int month){
@@ -42,7 +42,7 @@ public record MonthlyAttendanceGetResponse(
                     return dailyPayment;
                 })
                 .reduce(0, Integer::sum);
-        return new MonthlyAttendanceGetResponse((long)year, (long)month, workPlace.getCustomWorkPlaceId(), workPlace.getCustomWorkPlaceNm(), workPlace.getColorType(), totalPayPerMonth, works);
+        return new MonthlyAttendanceGetResponse((long)year, (long)month, workPlace.getCustomWorkPlaceId(), workPlace.getCustomWorkPlaceNm(), workPlace.getColorType().getCode(), totalPayPerMonth, works);
     }
 
     public record AttendanceTimeResponse (String workDay, LocalDateTime startTime, LocalDateTime endTime, Integer totalPayDay){}
