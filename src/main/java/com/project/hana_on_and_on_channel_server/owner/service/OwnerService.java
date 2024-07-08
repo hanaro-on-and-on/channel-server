@@ -311,9 +311,8 @@ public class OwnerService {
                             )
                     ).sum();
 
-            ownerSalaryEmployeeGetResponseList.add(
-                    OwnerSalaryEmployeeGetResponse.fromEntity(workPlaceEmployee, payment)
-            );
+            OwnerSalaryEmployeeGetResponse.fromEntity(workPlaceEmployee, payment)
+                    .ifPresent(ownerSalaryEmployeeGetResponseList::add);
         }
 
         // workplace의 totalPayment 계산

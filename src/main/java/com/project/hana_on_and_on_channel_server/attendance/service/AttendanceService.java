@@ -63,9 +63,12 @@ public class AttendanceService {
 
         if (attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 500.0, dto.workPlaceEmployeeId())) {
             attendance.checkIn(LocalDateTime.now());
+            return AttendanceCheckInResponse.fromEntity(attendance, true);
         }
 
-        return AttendanceCheckInResponse.fromEntity(attendance);
+        return AttendanceCheckInResponse.fromEntity(attendance, false);
+
+
     }
 
 
@@ -87,9 +90,10 @@ public class AttendanceService {
         if (attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 500.0, dto.workPlaceEmployeeId())) {
             attendance.checkOut(LocalDateTime.now());
             attendance.updateAttendanceType(AttendanceType.REAL);
+            return AttendanceCheckOutResponse.fromEntity(attendance, true);
         }
 
-        return AttendanceCheckOutResponse.fromEntity(attendance);
+        return AttendanceCheckOutResponse.fromEntity(attendance, false);
     }
 
     public static Integer calculateDailyPayment(LocalDateTime startTime, LocalDateTime endTime, Integer restMinute, Long payPerHour) {

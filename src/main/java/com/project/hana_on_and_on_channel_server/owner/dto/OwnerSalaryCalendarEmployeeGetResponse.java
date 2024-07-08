@@ -11,9 +11,10 @@ import java.time.LocalDateTime;
 
 public record OwnerSalaryCalendarEmployeeGetResponse(
         Long attendanceId,
+        Long workPlaceEmployeeId,
         String employeeName,
         LocalDateTime startTime,
-        LocalDateTime endDate,
+        LocalDateTime endTime,
         Integer restMinute,
         Integer payment
 ) {
@@ -30,6 +31,7 @@ public record OwnerSalaryCalendarEmployeeGetResponse(
         }
         return new OwnerSalaryCalendarEmployeeGetResponse(
                 attendance.getAttendanceId(),
+                workPlaceEmployee.getWorkPlaceEmployeeId(),
                 employee.getEmployeeNm(),
                 attendance.getStartTime(),
                 attendance.getEndTime(),
