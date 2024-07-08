@@ -14,7 +14,7 @@ public record OwnerSalaryCalendarEmployeeGetResponse(
         Long workPlaceEmployeeId,
         String employeeName,
         LocalDateTime startTime,
-        LocalDateTime endDate,
+        LocalDateTime endTime,
         Integer restMinute,
         Integer payment
 ) {
