@@ -139,10 +139,10 @@ public class AttendanceService {
         WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId)
                 .orElseThrow(WorkPlaceEmployeeNotFoundException::new);
 
-        //사용자 검증
-        if(userId != workPlaceEmployee.getEmployee().getUserId()){
-            throw  new WorkPlaceEmployeeInvalidException();
-        }
+//        //사용자 검증
+//        if(userId != workPlaceEmployee.getEmployee().getUserId()){
+//            throw  new WorkPlaceEmployeeInvalidException();
+//        }
 
         EmploymentContract employmentContract = employmentContractRepository.findFirstByWorkPlaceEmployeeOrderByCreatedAtDesc(workPlaceEmployee)
                 .orElseThrow(EmployeeNotFoundException::new);
