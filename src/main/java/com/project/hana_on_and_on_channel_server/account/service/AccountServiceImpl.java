@@ -1,9 +1,11 @@
 package com.project.hana_on_and_on_channel_server.account.service;
 
-import com.project.hana_on_and_on_channel_server.account.dto.AccountDebitRequest;
-import com.project.hana_on_and_on_channel_server.account.dto.AccountGetResponse;
-import com.project.hana_on_and_on_channel_server.account.dto.UserLoginRequest;
-import com.project.hana_on_and_on_channel_server.account.dto.UserLoginResponse;
+import com.project.hana_on_and_on_channel_server.account.dto.*;
+import com.project.hana_on_and_on_channel_server.common.util.JwtUtil;
+import com.project.hana_on_and_on_channel_server.employee.domain.Employee;
+import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
+import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
+import com.project.hana_on_and_on_channel_server.owner.repository.OwnerRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.SalaryTransferReserve;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -24,6 +26,9 @@ import java.util.List;
 public class AccountServiceImpl implements AccountService{
 
     private static final Logger logger = LoggerFactory.getLogger(AccountServiceImpl.class);
+    private final JwtUtil jwtUtil;
+    private final OwnerRepository ownerRepository;
+    private final EmployeeRepository employeeRepository;
 
     @Value("${account.base-url}")
     private String BASE_URL;
@@ -46,13 +51,19 @@ public class AccountServiceImpl implements AccountService{
         String uri = "/users/login";
         WebClient webClient = WebClient.create(BASE_URL);
 
-        return webClient.post()
+        AccountUserLoginResponse accountUserLoginResponse = webClient.post()
                 .uri(BASE_URL + uri)
                 .bodyValue(dto)
                 .retrieve()
-                .bodyToMono(UserLoginResponse.class)
+                .bodyToMono(AccountUserLoginResponse.class)
                 .doOnError(error -> logger.info("Login Failed: " + error.getMessage()))
                 .block();
+
+        Long userId = jwtUtil.getAuthValue(accountUserLoginResponse.accessToken(), Long.class);
+        Long ownerId = ownerRepository.findByUserId(userId).map(Owner::getOwnerId).orElse(null);
+        Long employeeId = employeeRepository.findByUserId(userId).map(Employee::getEmployeeId).orElse(null);
+
+        return new UserLoginResponse(accountUserLoginResponse.accessToken(), ownerId, employeeId);
     }
 
     public List<AccountGetResponse> findAccountList(Long userId){
