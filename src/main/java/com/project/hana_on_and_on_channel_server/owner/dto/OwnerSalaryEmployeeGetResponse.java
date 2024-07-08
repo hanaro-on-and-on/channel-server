@@ -8,7 +8,7 @@ import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmploy
 import java.time.LocalDate;
 
 public record OwnerSalaryEmployeeGetResponse(
-        Long employeeId,
+        Long workPlaceEmployeeId,
         String employeeName,
         LocalDate workStartDate,
         Integer payment
