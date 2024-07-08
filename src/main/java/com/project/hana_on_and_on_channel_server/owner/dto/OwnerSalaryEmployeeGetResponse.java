@@ -6,6 +6,7 @@ import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 public record OwnerSalaryEmployeeGetResponse(
         Long workPlaceEmployeeId,
@@ -13,20 +14,20 @@ public record OwnerSalaryEmployeeGetResponse(
         LocalDate workStartDate,
         Integer payment
 ) {
-    public static OwnerSalaryEmployeeGetResponse fromEntity(WorkPlaceEmployee workPlaceEmployee, Integer payment){
+    public static Optional<OwnerSalaryEmployeeGetResponse> fromEntity(WorkPlaceEmployee workPlaceEmployee, Integer payment){
         if (workPlaceEmployee == null) {
             throw new WorkPlaceEmployeeNotFoundException();
         }
         Employee employee = workPlaceEmployee.getEmployee();
         if (employee == null) {
-            throw new EmployeeNotFoundException();
+            return Optional.empty();
         }
-        return new OwnerSalaryEmployeeGetResponse(
+        return Optional.of(new OwnerSalaryEmployeeGetResponse(
                 workPlaceEmployee.getWorkPlaceEmployeeId(),
                 employee.getEmployeeNm(),
                 workPlaceEmployee.getWorkStartDate(),
                 payment
-        );
+        ));
     }
 
 }
