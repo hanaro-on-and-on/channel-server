@@ -30,4 +30,5 @@ echo "> $JAR_NAME 소유권 변경"
 sudo chown ec2-user $JAR_NAME
 
 echo "> $JAR_NAME 실행"
-nohup java -jar $JAR_NAME > $REPOSITORY/nohup.out 2>&1 &
+nohup java -jar -Dspring.config.location=file:///home/ec2-user/app/step2/application.yml $JAR_NAME > $REPOSITORY/nohup.out 2>&1 &
+# java -jar hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar > /home/ec2-user/app/step2/nohup.out 2>&1 &
