@@ -8,7 +8,9 @@ import com.project.hana_on_and_on_channel_server.owner.domain.Notification;
 import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.ColorType;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
+import com.project.hana_on_and_on_channel_server.owner.domain.enumType.WorkPlaceStatus;
 import com.project.hana_on_and_on_channel_server.owner.dto.*;
 import com.project.hana_on_and_on_channel_server.owner.exception.*;
 import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRepository;
@@ -106,9 +108,9 @@ public class OwnerService {
                 .location(dto.location().toPoint())
                 .businessRegistrationNumber(dto.businessRegistrationNumber())
                 .openingDate(dto.openingDate())
-                .workPlaceStatus(dto.workPlaceStatus())
+                .workPlaceStatus(WorkPlaceStatus.OPERATING)
                 .workPlaceType(dto.workPlaceType())
-                .colorType(dto.colorType())
+                .colorType(ColorType.fromCode(dto.colorTypeCode()))
                 .owner(owner)
                 .build()
         );
