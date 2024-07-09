@@ -225,7 +225,7 @@ public class EmployeeService {
                     ).sum();
 
             PayStub payStub = payStubRepository.findByWorkPlaceEmployeeIdAndYearAndMonth(workPlaceEmployee.getWorkPlaceEmployeeId(), year, month)
-                            .orElse(null);
+                            .orElse(null);  // 아직 생성 안된 경우 null
 
             employeeSalaryGetResponseList.add(
                     EmployeeSalaryGetResponse.fromEntity(workPlaceEmployee, payStub, payment)
