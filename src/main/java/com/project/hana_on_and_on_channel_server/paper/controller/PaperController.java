@@ -1,5 +1,6 @@
 package com.project.hana_on_and_on_channel_server.paper.controller;
 
+import com.project.hana_on_and_on_channel_server.paper.dto.PaperPayStubWorkPlaceEmployeeGetResponse;
 import com.project.hana_on_and_on_channel_server.paper.dto.PaperWorkPlaceGetResponse;
 import com.project.hana_on_and_on_channel_server.paper.dto.*;
 import com.project.hana_on_and_on_channel_server.paper.service.PaperService;
@@ -56,6 +57,12 @@ public class PaperController {
     @GetMapping("/{workPlaceEmployeeId}/pay-stubs")
     public ResponseEntity<MonthlyPayStubGetResponse> getMonthlyPayStubWithAttendance(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceEmployeeId, @RequestParam int year, @RequestParam int month){
         MonthlyPayStubGetResponse response = paperService.getMonthlyPayStubWithAttendance(userId, workPlaceEmployeeId, year, month);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/pay-stubs/{workPlaceEmployeeId}/info")
+    public ResponseEntity<PaperPayStubWorkPlaceEmployeeGetResponse> getPayStubWorkPlaceEmployeeInfo(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceEmployeeId) {
+        PaperPayStubWorkPlaceEmployeeGetResponse response = paperService.getPayStubWorkPlaceEmployeeInfo(userId, workPlaceEmployeeId);
         return ResponseEntity.ok(response);
     }
 
