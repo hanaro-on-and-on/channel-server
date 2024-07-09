@@ -15,7 +15,7 @@ import com.project.hana_on_and_on_channel_server.owner.repository.NotificationRe
 import com.project.hana_on_and_on_channel_server.owner.repository.OwnerRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
-import com.project.hana_on_and_on_channel_server.owner.vo.BusinessInfoList;
+import com.project.hana_on_and_on_channel_server.owner.vo.BusinessInfoResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -104,23 +104,46 @@ public class OwnerService {
         return OwnerWorkPlaceUpsertResponse.fromEntity(workPlace);
     }
 
-    public OwnerWorkPlaceCheckRegistrationNumberResponse checkRegistrationNumber(OwnerWorkPlaceCheckRegistrationNumberRequest dto) throws URISyntaxException {
+    public OwnerWorkPlaceCheckRegistrationNumberResponse checkRegistrationNumber(Long userId, OwnerWorkPlaceCheckRegistrationNumberRequest dto) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        // Request Body
+        Map<String, Object> businessMap = new HashMap<>();
+        businessMap.put("b_no", dto.businessRegistrationNumber());
+        businessMap.put("start_dt", dto.openDate());
+        businessMap.put("p_nm", owner.getOwnerNm());
+        businessMap.put("b_nm", dto.businessName());
+        // b_adr은 검증 안 함
+
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("b_no", new String[]{dto.businessRegistrationNumber()});
+        List<Map<String, Object>> businessList = new ArrayList<>();
+        businessList.add(businessMap);
+        requestBody.put("businesses", businessList);
+
+        // Request Header
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json");
         headers.set("Accept", "application/json");
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<BusinessInfoList> businessInfoList = restTemplate.exchange(
-                new URI("https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey="+serviceKey),
-                HttpMethod.POST,
-                requestEntity,
-                BusinessInfoList.class
-        );
+        // openAPI 요청 및 응답
+        ResponseEntity<BusinessInfoResponse> businessInfoList = null;
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            businessInfoList = restTemplate.exchange(
+                    new URI("https://api.odcloud.kr/api/nts-businessman/v1/validate?serviceKey=" + serviceKey),
+                    HttpMethod.POST,
+                    requestEntity,
+                    BusinessInfoResponse.class
+            );
+            // 성공적인 응답 처리
+        } catch (URISyntaxException e) {
+            // URI 생성 중 예외 처리
+            e.printStackTrace();
+        }
 
-        return OwnerWorkPlaceCheckRegistrationNumberResponse.fromEntity(businessInfoList.getBody());
+        return OwnerWorkPlaceCheckRegistrationNumberResponse.fromEntity(businessInfoList.getBody(), dto.businessAddress());
     }
 
     @Transactional(readOnly = true)

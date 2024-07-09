@@ -5,9 +5,9 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-public class BusinessInfoList {
-    private int request_cnt;
-    private int match_cnt;
+public class BusinessInfoResponse {
     private String status_code;
-    private List<BusinessInfo> data;
+    private int request_cnt;
+    private int valid_cnt;
+    private List<BusinessInfoData> data;
 }

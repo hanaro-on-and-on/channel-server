@@ -24,8 +24,8 @@ public class OwnerWorkPlaceController {
     }
 
     @PostMapping("/valid/registration-number")
-    public ResponseEntity<OwnerWorkPlaceCheckRegistrationNumberResponse> checkRegistrationNumber(@RequestBody OwnerWorkPlaceCheckRegistrationNumberRequest dto) throws URISyntaxException {
-        OwnerWorkPlaceCheckRegistrationNumberResponse response = ownerService.checkRegistrationNumber(dto);
+    public ResponseEntity<OwnerWorkPlaceCheckRegistrationNumberResponse> checkRegistrationNumber(@AuthenticationPrincipal Long userId, @RequestBody OwnerWorkPlaceCheckRegistrationNumberRequest dto) {
+        OwnerWorkPlaceCheckRegistrationNumberResponse response = ownerService.checkRegistrationNumber(userId, dto);
         return ResponseEntity.ok(response);
     }
 
