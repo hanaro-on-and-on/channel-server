@@ -157,6 +157,9 @@ public class OwnerService {
         for (WorkPlace workPlace : workPlaceList) {
             List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceIdAndEmployeeStatusEquals(workPlace.getWorkPlaceId(), employeeStatus);
             for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
+                if (workPlaceEmployee.getEmployee() == null) {
+                    continue;
+                }
                 ownerWorkPlaceEmployeeGetResponseList.add(
                         OwnerWorkPlaceEmployeeGetResponse.fromEntity(workPlaceEmployee)
                 );
