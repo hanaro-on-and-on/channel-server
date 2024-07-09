@@ -157,9 +157,11 @@ public class OwnerService {
         for (WorkPlace workPlace : workPlaceList) {
             List<WorkPlaceEmployee> workPlaceEmployeeList = workPlaceEmployeeRepository.findByWorkPlaceWorkPlaceIdAndEmployeeStatusEquals(workPlace.getWorkPlaceId(), employeeStatus);
             for (WorkPlaceEmployee workPlaceEmployee : workPlaceEmployeeList) {
-                ownerWorkPlaceEmployeeGetResponseList.add(
-                        OwnerWorkPlaceEmployeeGetResponse.fromEntity(workPlaceEmployee)
-                );
+                if (workPlaceEmployee.getEmployee() != null) {  // 계약 완료된 근무자만 확인
+                    ownerWorkPlaceEmployeeGetResponseList.add(
+                            OwnerWorkPlaceEmployeeGetResponse.fromEntity(workPlaceEmployee)
+                    );
+                }
             }
         }
         return new OwnerWorkPlaceEmployeeListGetResponse(ownerWorkPlaceEmployeeGetResponseList);
