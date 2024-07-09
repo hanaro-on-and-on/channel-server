@@ -97,9 +97,9 @@ public class OwnerService {
     }
 
     @Transactional
-    public OwnerWorkPlaceUpsertResponse saveWorkPlace(OwnerWorkPlaceUpsertRequest dto) {
+    public OwnerWorkPlaceUpsertResponse saveWorkPlace(Long userId, OwnerWorkPlaceUpsertRequest dto) {
         // owner 존재 여부 확인
-        Owner owner = ownerRepository.findById(dto.ownerId())
+        Owner owner = ownerRepository.findByUserId(userId)
                 .orElseThrow(OwnerNotFoundException::new);
 
         WorkPlace workPlace = workPlaceRepository.save(WorkPlace.builder()

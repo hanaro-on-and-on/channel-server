@@ -18,8 +18,8 @@ public class OwnerWorkPlaceController {
     private final OwnerService ownerService;
 
     @PostMapping
-    public ResponseEntity<OwnerWorkPlaceUpsertResponse> saveWorkPlace(@RequestBody OwnerWorkPlaceUpsertRequest dto) {
-        OwnerWorkPlaceUpsertResponse response = ownerService.saveWorkPlace(dto);
+    public ResponseEntity<OwnerWorkPlaceUpsertResponse> saveWorkPlace(@AuthenticationPrincipal Long userId, @RequestBody OwnerWorkPlaceUpsertRequest dto) {
+        OwnerWorkPlaceUpsertResponse response = ownerService.saveWorkPlace(userId, dto);
         return ResponseEntity.ok(response);
     }
 

@@ -11,8 +11,7 @@ public record OwnerWorkPlaceUpsertRequest(
         String businessRegistrationNumber,
         String openingDate, // yyyymmdd
         WorkPlaceType workPlaceType,
-        String colorTypeCode,
-        Long ownerId
+        String colorTypeCode
 ) {
 
 }
