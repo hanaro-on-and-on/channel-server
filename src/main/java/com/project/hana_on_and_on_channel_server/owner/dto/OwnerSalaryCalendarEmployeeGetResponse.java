@@ -8,6 +8,7 @@ import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 public record OwnerSalaryCalendarEmployeeGetResponse(
         Long attendanceId,
@@ -18,7 +19,7 @@ public record OwnerSalaryCalendarEmployeeGetResponse(
         Integer restMinute,
         Integer payment
 ) {
-    public static OwnerSalaryCalendarEmployeeGetResponse fromEntity(Attendance attendance, WorkPlaceEmployee workPlaceEmployee, Integer payment) {
+    public static Optional<OwnerSalaryCalendarEmployeeGetResponse> fromEntity(Attendance attendance, WorkPlaceEmployee workPlaceEmployee, Integer payment) {
         if (attendance == null) {
             throw new AttendanceNotFoundException();
         }
@@ -27,9 +28,9 @@ public record OwnerSalaryCalendarEmployeeGetResponse(
         }
         Employee employee = workPlaceEmployee.getEmployee();
         if (employee == null) {
-            throw new EmployeeNotFoundException();
+            return Optional.empty();
         }
-        return new OwnerSalaryCalendarEmployeeGetResponse(
+        return Optional.of(new OwnerSalaryCalendarEmployeeGetResponse(
                 attendance.getAttendanceId(),
                 workPlaceEmployee.getWorkPlaceEmployeeId(),
                 employee.getEmployeeNm(),
@@ -37,6 +38,6 @@ public record OwnerSalaryCalendarEmployeeGetResponse(
                 attendance.getEndTime(),
                 attendance.getRestMinute(),
                 payment
-        );
+        ));
     }
 }
