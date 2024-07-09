@@ -1,7 +1,7 @@
 #!/bin/bash
 
 REPOSITORY=/home/ec2-user/app/step2
-PROJECT_NAME=channel-server
+FRONT_PROJECT_NAME=/front
 JAR_NAME=$REPOSITORY/hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar
 
 echo "> Build 파일 복사"
@@ -41,3 +41,20 @@ sudo chown ec2-user $REPOSITORY/nohup.out
 echo "> $JAR_NAME 실행"
 nohup java -jar -Dspring.config.location=file:///home/ec2-user/app/step2/application.yml $JAR_NAME > $REPOSITORY/nohup.out 2>&1 &
 # java -jar hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar > /home/ec2-user/app/step2/nohup.out 2>&1 &
+
+
+# 프론트 배포
+echo "> run client project"
+cd $REPOSITORY/$FRONT_PROJECT_NAME
+
+echo "> pm2 kill"
+pm2 kill
+
+echo "> git pull"
+git pull
+
+echo "> yarn dev"
+yarn dev
+
+echo "> pm2 build"
+pm2 serve build/ 3000 --spa
