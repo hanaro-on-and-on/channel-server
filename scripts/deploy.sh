@@ -2,7 +2,7 @@
 
 REPOSITORY=/home/ec2-user/app/step2
 PROJECT_NAME=channel-server
-JAR_NAME=$REPOSITORY/hana_on_and_on_channel_server-0.0.1-SNAPSHOT-plain.jar
+JAR_NAME=$REPOSITORY/hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar
 
 echo "> Build 파일 복사"
 cp $REPOSITORY/zip/*.jar $REPOSITORY/
