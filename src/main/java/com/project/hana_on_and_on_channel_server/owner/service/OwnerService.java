@@ -83,6 +83,17 @@ public class OwnerService {
         owner.registerAccountNumber(dto.accountNumber());
     }
 
+    public OwnerAndEmployeeAccountGetResponse findOwnerAndEmployeeAccount(Long userId, Long workPlaceEmployeeId){
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId).orElseThrow(WorkPlaceNotFoundException::new);
+
+        if(userId != workPlaceEmployee.getWorkPlace().getOwner().getUserId()){
+            throw new WorkPlaceEmployeeInvalidException(workPlaceEmployeeId);
+        }
+
+        return new OwnerAndEmployeeAccountGetResponse(owner.getOwnerNm(), owner.getAccountNumber(), workPlaceEmployee.getEmployee().getEmployeeNm(), workPlaceEmployee.getEmployee().getAccountNumber());
+    }
+
     @Transactional
     public OwnerWorkPlaceUpsertResponse saveWorkPlace(OwnerWorkPlaceUpsertRequest dto) {
         // owner 존재 여부 확인
