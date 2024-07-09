@@ -10,6 +10,7 @@ import com.project.hana_on_and_on_channel_server.owner.exception.ColorTypeNotFou
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
 import com.project.hana_on_and_on_channel_server.paper.domain.PayStub;
+import com.project.hana_on_and_on_channel_server.paper.domain.enumType.PayStubStatus;
 
 public record EmployeeSalaryGetResponse(
         Boolean isConnected,
@@ -18,7 +19,7 @@ public record EmployeeSalaryGetResponse(
         String workPlaceName,
         String workPlaceColorCode,
         Integer payment,
-        Long payStubId
+        PayStubStatus payStubStatus
 ) {
     // 연결근무지
     public static EmployeeSalaryGetResponse fromEntity(WorkPlaceEmployee workPlaceEmployee, PayStub payStub, Integer payment) {
@@ -40,7 +41,7 @@ public record EmployeeSalaryGetResponse(
                 workPlace.getWorkPlaceNm(),
                 colorType.getCode(),
                 payment,
-                payStub == null ? null : payStub.getPayStubId() // payStub은 null 가능하므로, NPE 체크 X
+                payStub == null ? null : payStub.getStatus()    // payStub은 null 가능하므로, NPE 체크 X
         );
     }
 
