@@ -18,7 +18,6 @@ import com.project.hana_on_and_on_channel_server.owner.repository.OwnerRepositor
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.owner.vo.BusinessInfoResponse;
-import com.project.hana_on_and_on_channel_server.paper.dto.PaperPayStubWorkPlaceEmployeeGetResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -34,6 +33,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.project.hana_on_and_on_channel_server.attendance.service.AttendanceService.calculateDailyPayment;
@@ -107,7 +107,7 @@ public class OwnerService {
                 .address(dto.address())
                 .location(dto.location().toPoint())
                 .businessRegistrationNumber(dto.businessRegistrationNumber())
-                .openingDate(dto.openingDate())
+                .openingDate(LocalDate.parse(dto.openingDate(), DateTimeFormatter.ofPattern("yyyyMMdd")))
                 .workPlaceStatus(WorkPlaceStatus.OPERATING)
                 .workPlaceType(dto.workPlaceType())
                 .colorType(ColorType.fromCode(dto.colorTypeCode()))

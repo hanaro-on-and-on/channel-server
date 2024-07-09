@@ -9,7 +9,7 @@ public record OwnerWorkPlaceUpsertRequest(
         String address,
         GeoPoint location,
         String businessRegistrationNumber,
-        LocalDate openingDate,
+        String openingDate, // yyyymmdd
         WorkPlaceType workPlaceType,
         String colorTypeCode,
         Long ownerId
