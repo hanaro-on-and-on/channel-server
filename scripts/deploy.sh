@@ -9,6 +9,7 @@ cp $REPOSITORY/zip/*.jar $REPOSITORY/
 
 echo "> 현재 구동 중인 애플리케이션 pid 확인"
 
+CURRENT_PID=$(lsof -ti :8080)
 #CURRENT_PID=$(pgrep -f hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar)
 
 echo "현재 구동 중인 애플리케이션 pid: $CURRENT_PID"
