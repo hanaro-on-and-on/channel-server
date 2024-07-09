@@ -167,6 +167,21 @@ public class OwnerService {
         return new OwnerWorkPlaceEmployeeListGetResponse(ownerWorkPlaceEmployeeGetResponseList);
     }
 
+    @Transactional(readOnly = true)
+    public OwnerWorkPlaceEmployeeDetailGetResponse getDetailEmployee(Long userId, Long workPlaceEmployeeId) {
+        // owner 존재 여부 확인
+        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId).orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+
+        // owner가 소유한 workPlace가 맞는지 검증
+        if (owner != workPlaceEmployee.getWorkPlace().getOwner()) {
+            throw new WorkPlaceEmployeeInvalidException();
+        }
+
+        return OwnerWorkPlaceEmployeeDetailGetResponse.fromEntity(workPlaceEmployee);
+    }
+
     @Transactional(propagation = Propagation.REQUIRED)
     public OwnerWorkPlaceEmployeeQuitResponse quitEmployee(Long userId, OwnerWorkPlaceEmployeeQuitRequest dto) {
         // owner 존재 여부 확인
