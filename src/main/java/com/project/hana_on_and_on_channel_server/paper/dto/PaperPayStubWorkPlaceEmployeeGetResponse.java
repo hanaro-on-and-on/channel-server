@@ -26,7 +26,7 @@ public record PaperPayStubWorkPlaceEmployeeGetResponse(
         if (workPlace == null) {
             throw new WorkPlaceNotFoundException();
         }
-        ColorType colorType = workPlaceEmployee.getColorType();
+        ColorType colorType = workPlace.getColorType();
         if (colorType == null) {
             throw new ColorTypeNotFoundException();
         }
