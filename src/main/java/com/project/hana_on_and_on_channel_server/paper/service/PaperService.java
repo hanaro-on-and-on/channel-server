@@ -173,11 +173,6 @@ public class PaperService {
     public EmployeeAndWorkPlaceEmployeeConnectResponse signEmploymentContractAndConnectEmployeeToWorkPlace(Long userId, Long employmentContractId){
         EmploymentContract employmentContract = employmentContractRepository.findById(employmentContractId).orElseThrow(EmploymentContractNotFoundException::new);
 
-        // 본인 근로계약서가 아닐 경우 예외처리
-        if(userId != employmentContract.getWorkPlaceEmployee().getEmployee().getUserId()){
-            throw new EmploymentContractInvalidException(employmentContractId);
-        }
-
         // 근로계약서 서명되어있을 경우 예외처리
         if(employmentContract.getEmployeeSign()){
             throw new EmploymentContractAlreadyConnectedException();
