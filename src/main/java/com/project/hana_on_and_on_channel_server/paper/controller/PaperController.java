@@ -95,4 +95,10 @@ public class PaperController {
         SalaryTransferReserveResponse response = paperService.reservePayStub(userId, payStubId, dto);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/pay-stubs/create")
+    public ResponseEntity<Void> createPayStub(){
+        paperService.executeMonthlyPayStubGeneration();
+        return ResponseEntity.ok(null);
+    }
 }
