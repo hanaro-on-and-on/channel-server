@@ -4,6 +4,7 @@ import com.project.hana_on_and_on_channel_server.employee.dto.EmployeeAccountGet
 import com.project.hana_on_and_on_channel_server.owner.dto.OwnerAccountGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.dto.OwnerAccountUpsertRequest;
 import com.project.hana_on_and_on_channel_server.owner.dto.OwnerAccountUpsertResponse;
+import com.project.hana_on_and_on_channel_server.owner.dto.OwnerAndEmployeeAccountGetResponse;
 import com.project.hana_on_and_on_channel_server.owner.service.OwnerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -36,5 +37,11 @@ public class OwnerAccountController {
     public ResponseEntity<Void> updateOwnerAccount(@AuthenticationPrincipal Long userId, @RequestBody OwnerAccountUpsertRequest dto) {
         ownerService.updateOwnerAccount(userId, dto);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{workPlaceEmployeeId}")
+    public ResponseEntity<OwnerAndEmployeeAccountGetResponse> findOwnerAndEmployeeAccount(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceEmployeeId){
+        OwnerAndEmployeeAccountGetResponse response = ownerService.findOwnerAndEmployeeAccount(userId, workPlaceEmployeeId);
+        return ResponseEntity.ok(response);
     }
 }
