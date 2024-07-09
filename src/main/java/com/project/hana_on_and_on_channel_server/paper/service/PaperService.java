@@ -14,16 +14,15 @@ import com.project.hana_on_and_on_channel_server.employee.exception.EmployeeNotF
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomAttendanceMemoRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.CustomWorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.employee.repository.EmployeeRepository;
+import com.project.hana_on_and_on_channel_server.owner.domain.Owner;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlace;
 import com.project.hana_on_and_on_channel_server.owner.domain.WorkPlaceEmployee;
 import com.project.hana_on_and_on_channel_server.owner.domain.enumType.EmployeeStatus;
-import com.project.hana_on_and_on_channel_server.owner.exception.OwnerInvalidException;
-import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeInvalidException;
-import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceNotFoundException;
+import com.project.hana_on_and_on_channel_server.owner.exception.*;
+import com.project.hana_on_and_on_channel_server.owner.repository.OwnerRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.*;
 import com.project.hana_on_and_on_channel_server.paper.dto.PaperWorkPlaceGetResponse;
-import com.project.hana_on_and_on_channel_server.owner.exception.WorkPlaceEmployeeNotFoundException;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.paper.domain.enumType.PayStubStatus;
 import com.project.hana_on_and_on_channel_server.paper.dto.*;
@@ -65,6 +64,7 @@ public class PaperService {
     private final SalaryTransferReserveRepository salaryTransferReserveRepository;
 
     private final AccountService accountService;
+    private final OwnerRepository ownerRepository;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public List<EmploymentContractListGetResponse> findEmploymentContractList (Long userId){
@@ -312,6 +312,24 @@ public class PaperService {
                 .taxRate(9.4).taxPay((long)Math.floor(basicHour*customWorkPlace.getPayPerHour()*0.094))
                 .build();
     }
+
+
+    @Transactional(readOnly = true)
+    public PaperPayStubWorkPlaceEmployeeGetResponse getPayStubWorkPlaceEmployeeInfo(Long userId, Long workPlaceEmployeeId) {
+        // TODO : owner, employee 모두 가능
+//        // owner 존재 여부 확인
+//        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
+
+        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId).orElseThrow(WorkPlaceEmployeeNotFoundException::new);
+
+//        // owner가 소유한 workPlace가 맞는지 검증
+//        if (owner != workPlaceEmployee.getWorkPlace().getOwner()) {
+//            throw new WorkPlaceEmployeeInvalidException();
+//        }
+
+        return PaperPayStubWorkPlaceEmployeeGetResponse.fromEntity(workPlaceEmployee);
+    }
+
 
     private Integer calculateDailyBasicHour(LocalDateTime startTime, LocalDateTime endTime) {
 

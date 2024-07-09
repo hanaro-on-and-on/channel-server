@@ -16,6 +16,7 @@ import com.project.hana_on_and_on_channel_server.owner.repository.OwnerRepositor
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceEmployeeRepository;
 import com.project.hana_on_and_on_channel_server.owner.repository.WorkPlaceRepository;
 import com.project.hana_on_and_on_channel_server.owner.vo.BusinessInfoResponse;
+import com.project.hana_on_and_on_channel_server.paper.dto.PaperPayStubWorkPlaceEmployeeGetResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -165,21 +166,6 @@ public class OwnerService {
             }
         }
         return new OwnerWorkPlaceEmployeeListGetResponse(ownerWorkPlaceEmployeeGetResponseList);
-    }
-
-    @Transactional(readOnly = true)
-    public OwnerWorkPlaceEmployeeDetailGetResponse getDetailEmployee(Long userId, Long workPlaceEmployeeId) {
-        // owner 존재 여부 확인
-        Owner owner = ownerRepository.findByUserId(userId).orElseThrow(OwnerNotFoundException::new);
-
-        WorkPlaceEmployee workPlaceEmployee = workPlaceEmployeeRepository.findById(workPlaceEmployeeId).orElseThrow(WorkPlaceEmployeeNotFoundException::new);
-
-        // owner가 소유한 workPlace가 맞는지 검증
-        if (owner != workPlaceEmployee.getWorkPlace().getOwner()) {
-            throw new WorkPlaceEmployeeInvalidException();
-        }
-
-        return OwnerWorkPlaceEmployeeDetailGetResponse.fromEntity(workPlaceEmployee);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

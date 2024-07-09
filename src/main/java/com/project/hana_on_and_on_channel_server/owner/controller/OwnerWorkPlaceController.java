@@ -35,12 +35,6 @@ public class OwnerWorkPlaceController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/employees/{workPlaceEmployeeId}")
-    public ResponseEntity<OwnerWorkPlaceEmployeeDetailGetResponse> getDetailEmployee(@AuthenticationPrincipal Long userId, @PathVariable Long workPlaceEmployeeId) {
-        OwnerWorkPlaceEmployeeDetailGetResponse response = ownerService.getDetailEmployee(userId, workPlaceEmployeeId);
-        return ResponseEntity.ok(response);
-    }
-
     @PutMapping("employees/quit")
     public ResponseEntity<OwnerWorkPlaceEmployeeQuitResponse> quitEmployee(@AuthenticationPrincipal Long userId, @RequestBody OwnerWorkPlaceEmployeeQuitRequest dto) {
         OwnerWorkPlaceEmployeeQuitResponse response = ownerService.quitEmployee(userId, dto);
