@@ -163,9 +163,6 @@ public class PaperService {
                         .build())
                 .forEach(workTime -> workTimeRepository.save(workTime));
 
-        //예상근무 생성
-        createExpectedAttendance(employmentContract, employmentContract.getWorkStartDate(), employmentContract.getWorkEndDate());
-
         return new EmploymentContractUpsertResponse(employmentContract.getEmploymentContractId(), workPlaceEmployee.getWorkPlaceEmployeeId());
     }
 
@@ -185,6 +182,9 @@ public class PaperService {
         Employee employee = employeeRepository.findByUserId(userId).orElseThrow(EmployeeNotFoundException::new);
         WorkPlaceEmployee workPlaceEmployee = employmentContract.getWorkPlaceEmployee();
         workPlaceEmployee.registerEmployee(employee);
+
+        // 예상 근무 생성
+        createExpectedAttendance(employmentContract, LocalDate.now(), employmentContract.getWorkEndDate());
 
         return new EmployeeAndWorkPlaceEmployeeConnectResponse(workPlaceEmployee.getWorkPlaceEmployeeId());
     }
