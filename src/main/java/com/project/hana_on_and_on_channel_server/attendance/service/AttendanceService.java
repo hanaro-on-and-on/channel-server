@@ -61,7 +61,7 @@ public class AttendanceService {
                 )
                 .orElseThrow(() -> new AttendanceNotFoundException());
 
-        if (attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 100.0, dto.workPlaceEmployeeId())) {
+        if (attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 100000.0, dto.workPlaceEmployeeId())) {
             attendance.checkIn(LocalDateTime.now());
             return AttendanceCheckInResponse.fromEntity(attendance, true);
         }
@@ -87,7 +87,7 @@ public class AttendanceService {
                 )
                 .orElseThrow(() -> new AttendanceNotFoundException());;
 
-        if (attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 100.0, dto.workPlaceEmployeeId())) {
+        if (attendanceRepository.existsInWorkPlaceRadius(point.getLng(), point.getLat(), 100000.0, dto.workPlaceEmployeeId())) {
             attendance.checkOut(LocalDateTime.now());
             attendance.updateAttendanceType(AttendanceType.REAL);
             return AttendanceCheckOutResponse.fromEntity(attendance, true);
