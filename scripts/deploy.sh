@@ -2,6 +2,7 @@
 
 REPOSITORY=/home/ec2-user/app/step2
 PROJECT_NAME=channel-server
+JAR_NAME=hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar
 
 echo "> Build 파일 복사"
 cp $REPOSITORY/zip/*.jar $REPOSITORY/
@@ -20,7 +21,7 @@ else
 fi
 
 echo "> 새 애플리케이션 배포"
-JAR_NAME=hana_on_and_on_channel_server-0.0.1-SNAPSHOT.jar
+
 
 echo "> JAR_NAME: $JAR_NAME"
 echo "> $JAR_NAME 에 실행권한 추가"
@@ -28,6 +29,12 @@ chmod +x $JAR_NAME
 
 echo "> $JAR_NAME 소유권 변경"
 sudo chown ec2-user $JAR_NAME
+
+echo "> nohup.out 에 실행권한 추가"
+chmod +x $REPOSITORY/nohup.out
+
+echo "> nohup.out 소유권 변경"
+sudo chown ec2-user $REPOSITORY/nohup.out
 
 echo "> $JAR_NAME 실행"
 nohup java -jar -Dspring.config.location=file:///home/ec2-user/app/step2/application.yml $JAR_NAME > $REPOSITORY/nohup.out 2>&1 &
