@@ -1,5 +1,6 @@
 package com.project.hana_on_and_on_channel_server.owner.domain.enumType;
 
+import com.project.hana_on_and_on_channel_server.owner.exception.ColorTypeNotFoundException;
 import lombok.Getter;
 
 @Getter
@@ -11,5 +12,14 @@ public enum ColorType {
 
     ColorType(String code) {
         this.code = code;
+    }
+
+    public static ColorType fromCode(String code) {
+        for (ColorType colorType : values()) {
+            if (colorType.getCode().equals(code)) {
+                return colorType;
+            }
+        }
+        throw new ColorTypeNotFoundException();
     }
 }
