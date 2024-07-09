@@ -360,10 +360,11 @@ public class OwnerService {
                             attendance.getPayPerHour()
                     );
 
-                    dailyEmployeeResponseList.computeIfAbsent(searchDate, k -> new ArrayList<>())
-                            .add(
-                                    OwnerSalaryCalendarEmployeeGetResponse.fromEntity(attendance, workPlaceEmployee, payment)
-                            );
+                    dailyEmployeeResponseList.computeIfAbsent(searchDate, k -> new ArrayList<>());
+
+                    OwnerSalaryCalendarEmployeeGetResponse.fromEntity(attendance, workPlaceEmployee, payment)
+                            .ifPresent(response -> dailyEmployeeResponseList.get(searchDate).add(response));
+
                 }
             }
 
